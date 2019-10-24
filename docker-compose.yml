@@ -1,0 +1,49 @@
+version: '2'
+
+networks:
+  pbr-net:
+    driver: bridge
+
+services:
+  database:
+    image: mysql:5.7
+    restart: always
+    container_name: database
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "true"
+      MYSQL_DATABASE: pbr
+      MYSQL_ROOT_PASSWORD: password
+    volumes:
+      - ./database/init:/docker-entrypoint-initdb.d
+    networks:
+      - pbr-net
+
+  backend:
+    build:
+      context: ./backend
+      args:
+        APP_ENV: ${APP_ENV}
+    volumes:
+      - ./backend/:/go/src/app
+    depends_on:
+      - database
+    ports:
+      - "3030:3030"
+    networks:
+      - pbr-net
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        APP_ENV: ${APP_ENV}
+    volumes:
+      - ./frontend/:/frontend/
+    depends_on:
+      - database
+    ports:
+      - "3000:3000"
+    networks:
+      - pbr-net
