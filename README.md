@@ -2,6 +2,7 @@
 
 - Node installed
 - Golang installed (At least 1.12)
+- Docker & docker-compose installed
 
 # To Run:
 
