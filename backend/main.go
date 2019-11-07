@@ -6,10 +6,11 @@ import (
 	"time"
 
 	"backend/postgres"
-	//"backend/sampleEndpoint"
+	// "backend/sampleEndpoint"
+
 	// "strings"
 
-	//"github.com/gorilla/mux"
+	// "github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/prometheus/common/log"
@@ -25,8 +26,7 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 
-	// "golang.org/x/oauth2/jws"
-
+	"google.golang.org/api/option"
 	"google.golang.org/api/sheets/v4"
 )
 
@@ -181,28 +181,9 @@ func refreshMaster2(mysqlDB *sqlx.DB) [][]interface{} {
 	return values
 }
 
-func writeToSpreadSheet(SQLData [][]interface{}, tok *oauth2.Token) {
+func writeToSpreadSheet(SQLData [][]interface{}, srv *sheets.Service) {
 	defer timeTrack(time.Now(), "Write")
-
 	ctx := context.Background()
-
-	b, err := ioutil.ReadFile("credentials.json")
-	if err != nil {
-		log.Fatalf("Unable to read client secret file: %v", err)
-	}
-
-	// If modifying these scopes, delete your previously saved token.json.
-	config, err := google.ConfigFromJSON(b, "https://www.googleapis.com/auth/spreadsheets")
-	// if err != nil {
-	// 	log.Fatalf("Unable to parse client secret file to config: %v", err)
-	// }
-	// client := getClient(config)
-	client := config.Client(context.Background(), tok)
-
-	srv, err := sheets.New(client)
-	if err != nil {
-		log.Fatalf("Unable to retrieve Sheets client: %v", err)
-	}
 	spreadsheetId := "1Hi0PrHe53q4JhNetcJ_y3WrDIJ9qocVEd4irMunxVyE"
 
 	// How the input data should be interpreted.
@@ -251,9 +232,32 @@ func tokenFromString(Auth http.Header) *oauth2.Token {
 	return AuthT
 }
 
+func getSheetsService(Auth http.Header) *sheets.Service {
+	ctx := context.Background()
+
+	b, err := ioutil.ReadFile("credentials.json")
+	if err != nil {
+		log.Fatalf("Unable to read client secret file: %v", err)
+	}
+
+	// // If modifying these scopes, delete your previously saved token.json.
+	config, err := google.ConfigFromJSON(b, "https://www.googleapis.com/auth/spreadsheets")
+	if err != nil {
+		log.Fatalf("Unable to parse client secret file to config: %v", err)
+	}
+	// client := config.Client(context.Background(), tok)
+
+	// srv, err := sheets.New(client)
+	srv, err := sheets.NewService(ctx, option.WithTokenSource(config.TokenSource(ctx, tokenFromString(Auth))))
+	if err != nil {
+		log.Fatalf("Unable to retrieve Sheets client: %v", err)
+	}
+	return srv
+}
+
 func test(w http.ResponseWriter, r *http.Request) {
 	// Auth := tokenFromString(r.Header.Get("Authorization"))
-	Auth := tokenFromString(r.Header)
+	Auth := getSheetsService(r.Header)
 	values := refreshMaster2(mysqlDB)
 	writeToSpreadSheet(values, Auth)
 }
