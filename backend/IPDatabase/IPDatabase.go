@@ -32,7 +32,7 @@ func GetMPL(mysqlDB *sqlx.DB) [][]interface{} {
 	// defer timeTrack(time.Now(), "master2")
 	// fetch all places from the db
 	var values [][]interface{}
-	rows, _ := mysqlDB.Queryx("SELECT parts.sku, parts.technical_desc, parts.customer_desc, vendors.name, FROM postgres.parts parts ORDER BY parts.index_parts")
+	rows, _ := mysqlDB.Queryx("SELECT parts.sku, parts.technical_desc, parts.customer_desc FROM postgres.parts parts ORDER BY parts.index_parts")
 	// iterate over each row
 	for rows.Next() {
 		var tdisc string
