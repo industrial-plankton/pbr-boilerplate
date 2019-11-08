@@ -41,8 +41,8 @@ func GetMPL(mysqlDB *sqlx.DB) [][]interface{} {
 		//var mVen string
 		// var MPN string
 		// use the NullString type if NULLABLE
-		_ = rows.Scan(&SKU, &tdisc, &cdisc)//, &mVen, &MPN)
-		rowdata := []interface{}{SKU, tdisc, cdisc)//, mVen, MPN}
+		_ = rows.Scan(&SKU, &tdisc, &cdisc)         //, &mVen, &MPN)
+		rowdata := []interface{}{SKU, tdisc, cdisc} //, mVen, MPN}
 		values = append(values, rowdata)
 	}
 
