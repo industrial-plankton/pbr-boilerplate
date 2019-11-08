@@ -1,7 +1,7 @@
 package MPLEndpoint
 
 import (
-	"encoding/json"
+	// "encoding/json"
 	// "fmt"
 	"log"
 	"net/http"
@@ -18,6 +18,6 @@ func MasterPartsListHandle(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Println("We found: ", MPL)
 
-	json.NewEncoder(w).Encode(MPL)
+	// json.NewEncoder(w).Encode(MPL)
 	log.Println("Sent JSON response")
 }
