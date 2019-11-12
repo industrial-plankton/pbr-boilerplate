@@ -44,6 +44,10 @@ func main() {
 	apiSubrouterPath := "/api"
 	routerAPI := main.PathPrefix(apiSubrouterPath).Subrouter()
 	routerV1 := routerAPI.PathPrefix("/v1").Subrouter()
+	main.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
+		w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
+		w.Write([]byte("The server is running.\n"))
+	})
 
 	// Load our endpoints
 	// sampleEndpoint.Load(routerV1, mysqlDB)
@@ -65,14 +69,17 @@ func main() {
 
 	server := &http.Server{
 		Addr:         ":" + port,
-		Handler:      routerAPI,
+		Handler:      main, //routerAPI,
+		WriteTimeout: 15 * time.Second,
+		ReadTimeout:  15 * time.Second,
 		TLSConfig:    cfg,
 		TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler), 0),
 	}
 
 	// // Prevents memory leak
 	server.SetKeepAlivesEnabled(false)
-	// // HTTP Rest server
+
+	// HTTP Rest server
 	log.Fatal(
 		// Serve on the specified port
 		server.ListenAndServeTLS("server.crt", "server.key"),

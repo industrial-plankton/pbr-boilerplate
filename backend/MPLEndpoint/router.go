@@ -16,5 +16,5 @@ var (
 func Load(router *mux.Router, mysqlDB *sqlx.DB) {
 	db = mysqlDB
 	MPLID = "1Hi0PrHe53q4JhNetcJ_y3WrDIJ9qocVEd4irMunxVyE"
-	router.HandleFunc("/MPLEndpoint", MasterPartsListHandle) //.Methods(http.MethodGet)
+	router.HandleFunc("/MPLEndpoint", MasterPartsListHandle).Headers("HeaderTest", "working") //.Methods(http.MethodGet)
 }
