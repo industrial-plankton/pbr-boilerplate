@@ -35,14 +35,16 @@ func GetMPL(mysqlDB *sqlx.DB) [][]interface{} {
 	rows, _ := mysqlDB.Queryx("SELECT parts.sku, parts.technical_desc, parts.customer_desc FROM postgres.public.parts parts ORDER BY parts.index_parts")
 	// iterate over each row
 	for rows.Next() {
-		var tdisc string
-		var cdisc string
-		var SKU string
-		//var mVen string
-		// var MPN string
-		// use the NullString type if NULLABLE
-		_ = rows.Scan(&SKU, &tdisc, &cdisc)         //, &mVen, &MPN)
-		rowdata := []interface{}{SKU, tdisc, cdisc} //, mVen, MPN}
+		// var tdisc string
+		// var cdisc string
+		// var SKU string
+		// //var mVen string
+		// // var MPN string
+		// // use the NullString type if NULLABLE
+		// _ = rows.Scan(&SKU, &tdisc, &cdisc)         //, &mVen, &MPN)
+		// rowdata := []interface{}{SKU, tdisc, cdisc} //, mVen, MPN}
+		// values = append(values, rowdata)
+		rowdata, _ := rows.SliceScan()
 		values = append(values, rowdata)
 	}
 

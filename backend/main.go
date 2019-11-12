@@ -44,7 +44,7 @@ func main() {
 	routerAPI := main.PathPrefix(apiSubrouterPath).Subrouter()
 	routerV1 := routerAPI.PathPrefix("/v1").Subrouter()
 	main.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
-		w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
+		// w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
 		w.Write([]byte("The server is running.\n"))
 	})
 
