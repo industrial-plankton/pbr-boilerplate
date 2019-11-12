@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net/http"
 	"time"
@@ -50,13 +51,30 @@ func main() {
 
 	log.Info("The server is starting, and it will be listening on port " + port)
 
-	server := &http.Server{Addr: ":" + port, Handler: routerAPI}
+	cfg := &tls.Config{
+		MinVersion:               tls.VersionTLS12,
+		CurvePreferences:         []tls.CurveID{tls.CurveP521, tls.CurveP384, tls.CurveP256},
+		PreferServerCipherSuites: true,
+		CipherSuites: []uint16{
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+			tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_RSA_WITH_AES_256_CBC_SHA,
+		},
+	}
+
+	server := &http.Server{
+		Addr:         ":" + port,
+		Handler:      routerAPI,
+		TLSConfig:    cfg,
+		TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler), 0),
+	}
 
 	// // Prevents memory leak
 	server.SetKeepAlivesEnabled(false)
 	// // HTTP Rest server
 	log.Fatal(
 		// Serve on the specified port
-		server.ListenAndServe(),
+		server.ListenAndServeTLS("server.crt", "server.key"),
 	)
 }
