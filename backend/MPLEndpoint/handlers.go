@@ -10,13 +10,13 @@ import (
 // sampleGet - Accepts a GET request
 func MasterPartsListHandle(w http.ResponseWriter, r *http.Request) {
 	log.Println("Running get MPL!")
-	MPL, err := RefreshMasterPartsList(r.Header)
+	_, err := RefreshMasterPartsList(r.Header)
 	if err != nil {
 		w.WriteHeader(http.StatusNoContent)
 		log.Println("No parts found!")
 		return
 	}
-	log.Println("We found: ", MPL)
+	// log.Println("We found: ", MPL)
 
 	// json.NewEncoder(w).Encode(MPL)
 	log.Println("Sent JSON response")
