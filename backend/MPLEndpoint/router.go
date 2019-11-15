@@ -16,5 +16,8 @@ var (
 func Load(router *mux.Router, mysqlDB *sqlx.DB) {
 	db = mysqlDB
 	// MPLID = "1Hi0PrHe53q4JhNetcJ_y3WrDIJ9qocVEd4irMunxVyE"
-	router.HandleFunc("/MPLEndpoint", MasterPartsListHandle).Headers("HeaderTest", "working") //.Methods(http.MethodGet)
+	router.HandleFunc("/MPLEndpoint", MasterPartsListHandle).Headers("RequestType", "MPLrefresh")      //.Methods(http.MethodGet)
+	router.HandleFunc("/MPLEndpoint", FindPartForEditHandle).Headers("RequestType", "findPartForEdit") //.Methods(http.MethodGet)
+	router.HandleFunc("/MPLEndpoint", SaveMPLEditHandle).Headers("RequestType", "SaveMPLEdit")         //.Methods(http.MethodGet)
+
 }

@@ -33,6 +33,24 @@ func GetUnits(mysqlDB *sqlx.DB) {
 	sliceofslices := values[:]
 	fmt.Println(sliceofslices, "\n")
 }
+func GetHeaders(mysqlDB *sqlx.DB, table string) []interface{} { //DOESNT WORK
+	defer timeTrack(time.Now(), "Get Headers of "+table)
+	results := make(map[string]interface{})
+	var interfaceCol []interface{}
+	var headers []interface{}
+
+	err := mysqlDB.QueryRowx("SELECT * FROM " + table).MapScan(results)
+	if err != nil {
+		fmt.Println(err)
+		return headers
+	}
+
+	for _, i := range results {
+		interfaceCol = []interface{}{i}
+		headers = append(headers, interfaceCol)
+	}
+	return headers
+}
 
 func GetView(mysqlDB *sqlx.DB, view string, headers []interface{}) [][]interface{} {
 	defer timeTrack(time.Now(), "View "+view)
@@ -42,6 +60,24 @@ func GetView(mysqlDB *sqlx.DB, view string, headers []interface{}) [][]interface
 	rows, _ := mysqlDB.Queryx("SELECT * FROM " + view)
 
 	// iterate over each row
+	for rows.Next() {
+		rowdata, _ := rows.SliceScan()
+		values = append(values, rowdata)
+	}
+
+	return values
+}
+
+func Search(mysqlDB *sqlx.DB, table string, key string, keycolumn string) [][]interface{} {
+	defer timeTrack(time.Now(), "Search for "+key)
+	var values [][]interface{}
+
+	rows, err := mysqlDB.Queryx("SELECT * FROM " + table + " t WHERE t." + keycolumn + "::text='" + key + "'::text")
+	if err != nil {
+		fmt.Println(err)
+		return values
+	}
+
 	for rows.Next() {
 		rowdata, _ := rows.SliceScan()
 		values = append(values, rowdata)

@@ -23,6 +23,7 @@ func tokenFromString(Auth http.Header) *oauth2.Token {
 	AuthT.AccessToken = Auth.Get("AccessToken")
 	expiry, err := strconv.ParseInt(Auth.Get("Expiry"), 10, 64)
 	if err != nil {
+		fmt.Println(err)
 		panic(err)
 	}
 	AuthT.Expiry = time.Unix(expiry, 0)
