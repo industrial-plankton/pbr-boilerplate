@@ -4,6 +4,7 @@ import (
 	// "errors"
 	"backend/IPDatabase"
 	"backend/IPsheets"
+	"backend/utility"
 	"fmt"
 	"net/http"
 )
@@ -47,4 +48,25 @@ func SaveMPLEdit(header http.Header) (interface{}, error) {
 	values := IPSheets.BatchGet(ranges, MPLID, IPSheets.GetSheetsService(header))
 	fmt.Print(values)
 	return values[0][0][1], nil
+}
+
+func KeywordSearch(header http.Header) (interface{}, error) {
+	keyRanges := []string{"KeywordSearch!D1:D2"}
+	srv := IPSheets.GetSheetsService(header)
+	keysInterface := IPSheets.BatchGetCol(keyRanges, MPLID, srv)
+	fmt.Print(keysInterface)
+	keys := utility.IntfToString(keysInterface[0][0])
+	for len(keys) < 2 { //append the empty keywords
+		keys = append(keys, "")
+	}
+	keys = []string{keys[0], keys[0], keys[1], keys[1]} //duplicate entries for multicolumn search
+	keys = IPDatabase.AddWildCards(keys)
+	// keycolumns := []string{"(t.technical_desc::text", "OR t.customer_desc::text)", " And (t.name::text", "OR t.part_number::text"}
+	keycolumns := []string{"technical_desc", "customer_desc", "name", "part_number"}
+	combiners := []string{"", "OR", ")AND(", "OR"}
+	partData := [][][]interface{}{IPDatabase.MultiLIKE(db, "public.keywordsearch", keys, keycolumns, combiners)}
+	fmt.Print(partData)
+	ranges := []string{"KeywordSearch!B10:M10000"}
+	IPSheets.BatchWriteToSheet(partData, ranges, MPLID, srv)
+	return partData, nil
 }

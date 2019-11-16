@@ -43,3 +43,14 @@ func SaveMPLEditHandle(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Println("We saved: ", part)
 }
+
+func KeywordSearchHandle(w http.ResponseWriter, r *http.Request) {
+	log.Println("Running Keyword Search!")
+	part, err := KeywordSearch(r.Header)
+	if err != nil {
+		w.WriteHeader(http.StatusNoContent)
+		log.Println("Search failed!")
+		return
+	}
+	log.Println("We found: ", part)
+}

@@ -19,5 +19,5 @@ func Load(router *mux.Router, mysqlDB *sqlx.DB) {
 	router.HandleFunc("/MPLEndpoint", MasterPartsListHandle).Headers("RequestType", "MPLrefresh")      //.Methods(http.MethodGet)
 	router.HandleFunc("/MPLEndpoint", FindPartForEditHandle).Headers("RequestType", "findPartForEdit") //.Methods(http.MethodGet)
 	router.HandleFunc("/MPLEndpoint", SaveMPLEditHandle).Headers("RequestType", "SaveMPLEdit")         //.Methods(http.MethodGet)
-
+	router.HandleFunc("/MPLEndpoint", KeywordSearchHandle).Headers("RequestType", "KeywordSearch")
 }

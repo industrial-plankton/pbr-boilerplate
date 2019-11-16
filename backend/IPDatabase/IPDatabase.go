@@ -85,3 +85,35 @@ func Search(mysqlDB *sqlx.DB, table string, key string, keycolumn string) [][]in
 
 	return values
 }
+
+func MultiLIKE(mysqlDB *sqlx.DB, table string, keys []string, keycolumns []string, combiners []string) [][]interface{} {
+	//KeyColumns should be appended with ::text when relevent
+	//Keys should be in the form 'key', '%key%' or '_key_', _ is single wildcard, % is multi wildcard
+	defer timeTrack(time.Now(), "MultiSearch")
+	var values [][]interface{}
+	conditions := "("
+	for i, e := range keycolumns {
+		conditions = conditions + combiners[i] + " LOWER(" + e + ") ~~ LOWER(" + keys[i] + ")"
+	}
+	conditions = conditions + ")"
+	fmt.Print(conditions)
+	rows, err := mysqlDB.Queryx("SELECT * FROM " + table + " AS t WHERE" + conditions)
+	if err != nil {
+		fmt.Println(err)
+		return values
+	}
+
+	for rows.Next() {
+		rowdata, _ := rows.SliceScan()
+		values = append(values, rowdata)
+	}
+
+	return values
+}
+
+func AddWildCards(array []string) []string {
+	for i, e := range array {
+		array[i] = "'%" + e + "%'"
+	}
+	return array
+}

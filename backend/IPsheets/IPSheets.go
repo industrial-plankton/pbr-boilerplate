@@ -41,13 +41,13 @@ func WriteToSpreadSheet(SQLData [][]interface{}, rangeData string, spreadsheetId
 		log.Fatal(err)
 	}
 
-	resp, err := srv.Spreadsheets.Values.BatchUpdate(spreadsheetId, rb).Context(ctx).Do()
+	_, err = srv.Spreadsheets.Values.BatchUpdate(spreadsheetId, rb).Context(ctx).Do()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// TODO: Change code below to process the `resp` object:
-	fmt.Printf("%#v\n", resp)
+	// fmt.Printf("%#v\n", resp)
 }
 
 func BatchWriteToSheet(SQLData [][][]interface{}, rangeData []string, spreadsheetId string, srv *sheets.Service) {
@@ -76,13 +76,13 @@ func BatchWriteToSheet(SQLData [][][]interface{}, rangeData []string, spreadshee
 		}
 	}
 
-	resp, err := srv.Spreadsheets.Values.BatchUpdate(spreadsheetId, rb).Context(ctx).Do()
+	_, err := srv.Spreadsheets.Values.BatchUpdate(spreadsheetId, rb).Context(ctx).Do()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// TODO: Change code below to process the `resp` object:
-	fmt.Printf("%#v\n", resp)
+	// fmt.Printf("%#v\n", resp)
 }
 
 func BatchGet(rangeData []string, spreadsheetId string, srv *sheets.Service) [][][]interface{} {
@@ -90,6 +90,24 @@ func BatchGet(rangeData []string, spreadsheetId string, srv *sheets.Service) [][
 	ctx := context.Background()
 
 	resp, err := srv.Spreadsheets.Values.BatchGet(spreadsheetId).Ranges(rangeData...).Context(ctx).Do()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var data [][][]interface{}
+	for _, e := range resp.ValueRanges {
+		v := *e
+		data = append(data, v.Values)
+	}
+
+	return data
+}
+
+func BatchGetCol(rangeData []string, spreadsheetId string, srv *sheets.Service) [][][]interface{} {
+	defer timeTrack(time.Now(), "Batch Read from sheet")
+	ctx := context.Background()
+
+	resp, err := srv.Spreadsheets.Values.BatchGet(spreadsheetId).MajorDimension("COLUMNS").Ranges(rangeData...).Context(ctx).Do()
 	if err != nil {
 		log.Fatal(err)
 	}
