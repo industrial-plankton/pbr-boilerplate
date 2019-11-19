@@ -24,19 +24,27 @@ func RefreshMasterPartsList(header http.Header) ([][]interface{}, error) {
 func FindPartForEdit(header http.Header) (interface{}, error) {
 	var data [][][]interface{}
 	var ranges []string
-	partnum := header.Get("RequestData")
-	// partHeaders := IPDatabase.GetHeaders(db, "parts")
-	partData := IPDatabase.Search(db, "public.mpltext", partnum, "sku")
-	partnumindex := fmt.Sprintf("%v", partData[0][0])
-	// venderHeaders := IPDatabase.GetHeaders(db, "partsvendertext")
-	venderData := IPDatabase.Search(db, "public.partsvendertext", partnumindex, "part_index")
 
-	// partHeaders = append(partHeaders, venderHeaders)
+	SKU := header.Get("RequestData")
+	partnumindex := fmt.Sprintf("%v", IPDatabase.Convert(db, "parts", SKU, "sku", "index_parts")[0]) //get the parts index
 
+	var partData [][]interface{}
+	partData = append(partData, IPDatabase.GetHeaders(db, "mpltext"))
+	for _, e := range IPDatabase.Search(db, "public.mpltext", partnumindex, "part_index") { //get the parts data
+		partData = append(partData, e)
+	}
+
+	var venderData [][]interface{}
+	venderData = append(venderData, IPDatabase.GetHeaders(db, "partsvendertext"))
+	for _, e := range IPDatabase.Search(db, "public.partsvendertext", partnumindex, "part_index") { //get the parts vendor data
+		venderData = append(venderData, e)
+	}
+
+	//combine data and their ranges for spreadsheet write
 	data = append(data, partData)
-	ranges = append(ranges, "MPLEdit!B10:Z10")
+	ranges = append(ranges, "MPLEdit!B9:Z10")
 	data = append(data, venderData)
-	ranges = append(ranges, "MPLEdit!A12:Z16")
+	ranges = append(ranges, "MPLEdit!A11:Z16")
 
 	IPSheets.BatchWriteToSheet(data, ranges, MPLID, IPSheets.GetSheetsService(header))
 
@@ -44,9 +52,17 @@ func FindPartForEdit(header http.Header) (interface{}, error) {
 }
 
 func SaveMPLEdit(header http.Header) (interface{}, error) {
+	// ranges := []string{"MPLEdit!B10:Z10", "MPLEdit!A12:Z16"}
 	ranges := []string{"MPLEdit!B10:Z10", "MPLEdit!A12:Z16"}
 	values := IPSheets.BatchGet(ranges, MPLID, IPSheets.GetSheetsService(header))
-	fmt.Print(values)
+	// fmt.Println(values)
+	utility.Log(values)
+	columns := IPDatabase.GetHeaders(db, "parts")
+	if len(values[0][0]) < 13 {
+		if IPDatabase.Exists(db, "parts", fmt.Sprint(values[0][0][0]), "index_parts") {
+		}
+	}
+	IPDatabase.Insert(db, "parts", columns, values[0])
 	return values[0][0][1], nil
 }
 

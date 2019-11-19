@@ -3,6 +3,7 @@ package IPDatabase
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -33,22 +34,23 @@ func GetUnits(mysqlDB *sqlx.DB) {
 	sliceofslices := values[:]
 	fmt.Println(sliceofslices, "\n")
 }
-func GetHeaders(mysqlDB *sqlx.DB, table string) []interface{} { //DOESNT WORK
-	defer timeTrack(time.Now(), "Get Headers of "+table)
-	results := make(map[string]interface{})
-	var interfaceCol []interface{}
-	var headers []interface{}
 
-	err := mysqlDB.QueryRowx("SELECT * FROM " + table).MapScan(results)
+func GetHeaders(mysqlDB *sqlx.DB, table string) []interface{} {
+	defer timeTrack(time.Now(), "Get Headers of "+table)
+	// fetch all places from the db
+	var headers []interface{}
+	rows, err := mysqlDB.Queryx("SELECT * FROM information_schema.columns WHERE table_schema = 'public' AND table_name='" + table + "';")
 	if err != nil {
 		fmt.Println(err)
 		return headers
 	}
-
-	for _, i := range results {
-		interfaceCol = []interface{}{i}
-		headers = append(headers, interfaceCol)
+	// iterate over each row
+	for rows.Next() {
+		rowdata, _ := rows.SliceScan()
+		headers = append(headers, rowdata[3])
 	}
+	fmt.Print("Headers found: ")
+	fmt.Println(headers)
 	return headers
 }
 
@@ -57,8 +59,11 @@ func GetView(mysqlDB *sqlx.DB, view string, headers []interface{}) [][]interface
 	// fetch all places from the db
 	var values [][]interface{}
 	values = append(values, headers)
-	rows, _ := mysqlDB.Queryx("SELECT * FROM " + view)
-
+	rows, err := mysqlDB.Queryx("SELECT * FROM " + view)
+	if err != nil {
+		fmt.Println(err)
+		return values
+	}
 	// iterate over each row
 	for rows.Next() {
 		rowdata, _ := rows.SliceScan()
@@ -113,7 +118,67 @@ func MultiLIKE(mysqlDB *sqlx.DB, table string, keys []string, keycolumns []strin
 
 func AddWildCards(array []string) []string {
 	for i, e := range array {
-		array[i] = "'%" + e + "%'"
+		array[i] = "'%" + strings.ReplaceAll(e, " ", "%") + "%'"
 	}
 	return array
+}
+
+func Insert(mysqlDB *sqlx.DB, table string, columns []interface{}, data [][]interface{}) {
+	combinedColumns := ""
+	for _, e := range columns {
+		combinedColumns = combinedColumns + fmt.Sprintf("%v", e) + ", "
+	}
+	combinedColumns = strings.TrimRight(combinedColumns, ", ")
+
+	combinedValues := ""
+	for _, rowData := range data {
+		for _, val := range rowData {
+			combinedValues = combinedValues + fmt.Sprintf("%v", val) + ", "
+		}
+		combinedValues = strings.TrimRight(combinedValues, ", ") + "),("
+	}
+	combinedValues = strings.TrimRight(combinedValues, "),(")
+
+	SQL := "INSERT INTO " +
+		table +
+		" (" + combinedColumns +
+		") VALUES (" +
+		combinedValues +
+		");"
+	fmt.Print("Insert SQL:" + SQL)
+	// tx := db.MustBegin()
+	// tx.MustExec(SQL)
+	// err := tx.Commit()
+	// if err != nil {
+	// 	fmt.Print(err)
+	// }
+}
+
+func Convert(mysqlDB *sqlx.DB, table string, key string, keycolumn string, endcolumn string) []interface{} {
+	defer timeTrack(time.Now(), "Convert "+key+" to "+endcolumn)
+	var value []interface{}
+
+	rows, err := mysqlDB.Queryx("SELECT t." + endcolumn + " FROM " + table + " t WHERE t." + keycolumn + "::text='" + key + "'::text")
+	if err != nil {
+		fmt.Println(err)
+		return value
+	}
+
+	for rows.Next() {
+		value, _ = rows.SliceScan()
+	}
+
+	return value
+}
+
+func Exists(mysqlDB *sqlx.DB, table string, key string, keycolumn string) bool {
+	var exists bool
+	rows, err := mysqlDB.Queryx("select exists(select 1 from " + table + " where " + keycolumn + "=" + key)
+	for rows.Next() {
+		err = rows.Scan(&exists)
+	}
+	if err != nil {
+		fmt.Println(err)
+	}
+	return exists
 }
