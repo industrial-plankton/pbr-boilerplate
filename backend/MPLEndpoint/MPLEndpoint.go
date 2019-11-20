@@ -14,10 +14,9 @@ type sampleRequest struct {
 }
 
 func RefreshMasterPartsList(header http.Header) ([][]interface{}, error) {
-	headers := []interface{}{"IP SKU", "Technical Description", "Customer Description", "Supplier (Main)", "Main Supplier PN", "Supplier (Secondary)", "Secondary supplier PN", "Extra Info", "Order Type", "unit", "Cost/unit", "currency", "Cost/ea or ft (CAD)", "Shipping Cost/ea (CAD)", "Sell Markup", "Sell price per ea or ft (USD, calculated)", "HS Code", "Re-order q-ty", "Part Location", "Book Type", "Sell price per ea or ft (USD, Static)"}
-	parts := IPDatabase.GetView(db, "public.new_view", headers)
+	// headers := []interface{}{"IP SKU", "Technical Description", "Customer Description", "Supplier (Main)", "Main Supplier PN", "Supplier (Secondary)", "Secondary supplier PN", "Extra Info", "Order Type", "unit", "Cost/unit", "currency", "Cost/ea or ft (CAD)", "Shipping Cost/ea (CAD)", "Sell Markup", "Sell price per ea or ft (USD, calculated)", "HS Code", "Re-order q-ty", "Part Location", "Book Type", "Sell price per ea or ft (USD, Static)"}
+	parts := IPDatabase.GetView(db, "new_view" /*, headers*/)
 	IPSheets.WriteToSpreadSheet(parts, "'Master Part List'!A1:Y1400", MPLID, IPSheets.GetSheetsService(header))
-
 	return parts, nil
 }
 
@@ -53,16 +52,27 @@ func FindPartForEdit(header http.Header) (interface{}, error) {
 
 func SaveMPLEdit(header http.Header) (interface{}, error) {
 	// ranges := []string{"MPLEdit!B10:Z10", "MPLEdit!A12:Z16"}
-	ranges := []string{"MPLEdit!B10:Z10", "MPLEdit!A12:Z16"}
+	ranges := []string{"MPLEdit!B9:Z9", "MPLEdit!B10:Z10", "MPLEdit!A12:Z16"}
 	values := IPSheets.BatchGet(ranges, MPLID, IPSheets.GetSheetsService(header))
+	// sheetHeaders := IPSheets.BatchGet([]string{"MPLEdit!B10:Z10"}, MPLID, IPSheets.GetSheetsService(header))
 	// fmt.Println(values)
 	utility.Log(values)
-	columns := IPDatabase.GetHeaders(db, "parts")
-	if len(values[0][0]) < 13 {
-		if IPDatabase.Exists(db, "parts", fmt.Sprint(values[0][0][0]), "index_parts") {
+	// columns := IPDatabase.GetHeaders(db, "parts")
+	headerMap := IPDatabase.GetView(db, "column_map")
+	partIndex := fmt.Sprint(values[0][0][0])
+
+	columns := utility.RearrangeHeaders(headerMap, values[0][0])
+
+	if IPDatabase.Exists(db, "parts", partIndex, "index_parts") {
+		for _, section := range values[1:] {
+			for _, row := range section {
+				IPDatabase.Update(db, "parts", partIndex, columns, row)
+			}
 		}
+	} else {
+		IPDatabase.Insert(db, "parts", columns, values[0])
 	}
-	IPDatabase.Insert(db, "parts", columns, values[0])
+
 	return values[0][0][1], nil
 }
 

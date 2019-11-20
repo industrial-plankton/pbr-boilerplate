@@ -1,8 +1,10 @@
 package utility
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"time"
 )
 
 func Log(info interface{}) {
@@ -16,4 +18,9 @@ func Log(info interface{}) {
 
 	log.SetOutput(f)
 	log.Println(info)
+}
+
+func TimeTrack(start time.Time, name string) {
+	elapsed := time.Since(start)
+	fmt.Println(name, " took ", elapsed)
 }

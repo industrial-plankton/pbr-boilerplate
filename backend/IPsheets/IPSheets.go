@@ -1,21 +1,18 @@
 package IPSheets
 
 import (
-	"fmt"
 	"log"
 	"time"
+
+	"backend/utility"
 
 	"golang.org/x/net/context"
 	"google.golang.org/api/sheets/v4"
 )
 
-func timeTrack(start time.Time, name string) {
-	elapsed := time.Since(start)
-	fmt.Println(name, " took ", elapsed)
-}
-
 func WriteToSpreadSheet(SQLData [][]interface{}, rangeData string, spreadsheetId string, srv *sheets.Service) {
-	defer timeTrack(time.Now(), "Write to "+rangeData)
+	defer utility.TimeTrack(time.Now(), "Write to "+rangeData)
+
 	ctx := context.Background()
 
 	// How the input data should be interpreted.
@@ -51,7 +48,7 @@ func WriteToSpreadSheet(SQLData [][]interface{}, rangeData string, spreadsheetId
 }
 
 func BatchWriteToSheet(SQLData [][][]interface{}, rangeData []string, spreadsheetId string, srv *sheets.Service) {
-	defer timeTrack(time.Now(), "Batch Write to sheet")
+	defer utility.TimeTrack(time.Now(), "Batch Write to sheet")
 	ctx := context.Background()
 
 	// How the input data should be interpreted.
@@ -86,7 +83,7 @@ func BatchWriteToSheet(SQLData [][][]interface{}, rangeData []string, spreadshee
 }
 
 func BatchGet(rangeData []string, spreadsheetId string, srv *sheets.Service) [][][]interface{} {
-	defer timeTrack(time.Now(), "Batch Read from sheet")
+	defer utility.TimeTrack(time.Now(), "Batch Read from sheet")
 	ctx := context.Background()
 
 	resp, err := srv.Spreadsheets.Values.BatchGet(spreadsheetId).Ranges(rangeData...).Context(ctx).Do()
@@ -104,7 +101,7 @@ func BatchGet(rangeData []string, spreadsheetId string, srv *sheets.Service) [][
 }
 
 func BatchGetCol(rangeData []string, spreadsheetId string, srv *sheets.Service) [][][]interface{} {
-	defer timeTrack(time.Now(), "Batch Read from sheet")
+	defer utility.TimeTrack(time.Now(), "Batch Read from sheet")
 	ctx := context.Background()
 
 	resp, err := srv.Spreadsheets.Values.BatchGet(spreadsheetId).MajorDimension("COLUMNS").Ranges(rangeData...).Context(ctx).Do()
