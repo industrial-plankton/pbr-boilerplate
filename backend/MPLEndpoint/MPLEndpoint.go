@@ -53,29 +53,33 @@ func FindPartForEdit(header http.Header) (interface{}, error) {
 
 func SaveMPLEdit(header http.Header) (interface{}, error) {
 	defer utility.TimeTrack(time.Now(), "Save")
-	// ranges := []string{"MPLEdit!B10:Z10", "MPLEdit!A12:Z16"}
-	ranges := []string{"MPLEdit!B9:Z9", "MPLEdit!B10:Z10", "MPLEdit!A12:Z16"}
-	read := IPSheets.BatchGet(ranges, MPLID, IPSheets.GetSheetsService(header))
+	headerRanges := []string{"MPLEdit!B9:Z9", "MPLEdit!A11:Z11"}
+	valueRanges := []string{"MPLEdit!B10:Z10", "MPLEdit!A12:Z16"}
+	read := IPSheets.BatchGet(append(headerRanges, valueRanges...), MPLID, IPSheets.GetSheetsService(header))
 
-	headerValues := read[:1]
-	values := read[1:]
-	utility.Log(values)
-	// columns := IPDatabase.GetHeaders(db, "parts")
-	headerMapBase := IPDatabase.GetView(db, "column_map")              //collect header collection from db
-	headerMap := utility.BuildMap(headerMapBase, []int{0, 1})          //make a map with the header data
-	columns := utility.RearrangeHeaders(headerMap, headerValues[0][0]) //relabel the sheet headers to the databse headers, in order of sheet
+	headerValues := read[:len(headerRanges)]
+	values := read[len(headerRanges):]
+	utility.Log(read)
 
-	partsValues := IPDatabase.TranslateIndexs(db, []string{"unit", "order_type", "book_type"}, columns, columns[1], headerMap, values[0])
-	partIndex := fmt.Sprint(partsValues[0][0]) //grab index_parts from the collected data
-	utility.Log(columns)
-	utility.Log("Part Index: " + partIndex)
-	if IPDatabase.Exists(db, "parts", partIndex, "index_parts") {
-		for _, row := range partsValues {
-			IPDatabase.Update(db, "parts", partIndex, columns, row)
-		}
-	} else {
-		IPDatabase.Insert(db, "parts", columns, values[0])
+	headerMapBase := IPDatabase.GetView(db, "column_map")     //collect header collection from db
+	headerMap := utility.BuildMap(headerMapBase, []int{0, 1}) //make a map with the header data
+	tablesToUpdate := []string{"parts", "parts_vendor"}
+
+	for i := range values {
+		IPDatabase.UpdateOrAdd(db, tablesToUpdate[i], headerMap, values[i], headerValues[i][0])
 	}
+
+	// partsValues := IPDatabase.TranslateIndexs(db, []string{"unit", "order_type", "book_type"}, columns, columns[1], headerMap, values[0])
+	// partIndex := fmt.Sprint(partsValues[0][0]) //grab index_parts from the collected data
+	// utility.Log(columns)
+	// utility.Log("Part Index: " + partIndex)
+	// if IPDatabase.Exists(db, "parts", partIndex, "index_parts") {
+	// 	for _, row := range partsValues {
+	// 		IPDatabase.Update(db, "parts", partIndex, columns, row)
+	// 	}
+	// } else {
+	// 	IPDatabase.Insert(db, "parts", columns, values[0])
+	// }
 
 	return values[0][0][1], nil
 }

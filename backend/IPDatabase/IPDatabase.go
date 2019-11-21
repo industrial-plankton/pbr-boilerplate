@@ -45,7 +45,6 @@ func GetHeaders(mysqlDB *sqlx.DB, table string) []interface{} { //returns header
 	rows, err := mysqlDB.Queryx(SQL)
 	if err != nil {
 		utility.Log(err)
-		// fmt.Println(err)
 		return headers
 	}
 	// iterate over each row
@@ -53,10 +52,8 @@ func GetHeaders(mysqlDB *sqlx.DB, table string) []interface{} { //returns header
 		rowdata, _ := rows.SliceScan()
 		headers = append(headers, rowdata[3]) //column names are stored in column 4 of information_schema.columns
 	}
-	utility.Log("Headers found: ")
-	utility.Log(headers)
-	// fmt.Print("Headers found: ")
-	// fmt.Println(headers)
+	// utility.Log("Headers found: ")
+	// utility.Log(headers)
 	return headers
 }
 
@@ -186,8 +183,11 @@ func Convert(mysqlDB *sqlx.DB, table string, key string, keycolumn string, endco
 	return value[0]
 }
 
-func Exists(mysqlDB *sqlx.DB, table string, key string, keycolumn string) bool {
+func Exists(mysqlDB *sqlx.DB, table string, key string, keycolumn string) bool { //checks if key exists in keycolumn, returns false immidiately if no key
 	defer timeTrack(time.Now(), "Exist check of "+key+" in "+table+"."+keycolumn)
+	if key == "" {
+		return false
+	}
 	var exists bool
 	SQL := "select exists(select 1 from " + table + " where " + keycolumn + "=" + key + ")"
 	rows, err := mysqlDB.Queryx(SQL)
@@ -289,7 +289,7 @@ func TranslateIndexs(mysqlDB *sqlx.DB, translationTables []string, columns []int
 	maps := make([]*bimap.BiMap, len(translationTables))
 	datalocations := make([]int, len(translationTables))
 	for i := range maps {
-		maps[i] = utility.BuildMap(GetView(mysqlDB, translationTables[i]), []int{0}) // build translation maps
+		maps[i] = utility.BuildMap(GetView(mysqlDB, translationTables[i]), []int{0}) // build translation maps //if index column not furthest right will need to relogic this
 	}
 
 	for i, e := range columns { //go through columns and save index locations, convert keycolumn to non-index header
@@ -309,4 +309,39 @@ func TranslateIndexs(mysqlDB *sqlx.DB, translationTables []string, columns []int
 		}
 	}
 	return data
+}
+
+func UpdateOrAdd(mysqlDB *sqlx.DB, table string, headerMap *bimap.BiMap, data [][]interface{}, headerValues []interface{}) {
+	columns := utility.RearrangeHeaders(headerMap, headerValues) //relabel the sheet headers to the databse headers, in order of sheet
+	keycolumnLoc := utility.FindUnIndexedLocation(table, columns)
+	var keycolumn interface{}
+	if keycolumnLoc == -1 {
+		keycolumn = nil //if table doesnt have a keycolumn -> nil
+	} else {
+		keycolumn = columns[keycolumnLoc]
+	}
+	indexLoc := utility.FindPrimIndexLocation(columns)
+	translationTables := utility.FindTranslationTables(table, columns)
+	utility.Log(keycolumn)
+	utility.Log(indexLoc)
+	utility.Log(translationTables)
+	if len(translationTables) > 0 { //only translate if needed
+		data = TranslateIndexs(mysqlDB, translationTables, columns, keycolumn, headerMap, data)
+	} else {
+		for i := range columns { //go through columns and convert keycolumn to non-index header
+			if columns[i] == keycolumn {
+				columns[i], _ = headerMap.GetInverse(keycolumn)
+			}
+		}
+	}
+
+	for _, row := range data { //go through each line
+		primaryIndex := fmt.Sprint(row[indexLoc]) //grab index_parts from the collected data
+
+		if Exists(mysqlDB, table, primaryIndex, fmt.Sprint(columns[indexLoc])) { //check that the index exists
+			Update(mysqlDB, table, primaryIndex, columns, row)
+		} else {
+			Insert(mysqlDB, table, columns, data)
+		}
+	}
 }

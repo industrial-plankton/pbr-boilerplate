@@ -2,6 +2,7 @@ package utility
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/vishalkuo/bimap"
@@ -51,4 +52,35 @@ func ParseNulls(data [][]interface{}) [][]interface{} { //puts '' around data, r
 	}
 	Log(data)
 	return data
+}
+
+func FindPrimIndexLocation(columns []interface{}) int {
+	for i, e := range columns {
+		if strings.HasPrefix(fmt.Sprint(e), "index_") {
+			return i
+		}
+	}
+	return -1
+}
+
+func FindUnIndexedLocation(table string, columns []interface{}) int {
+	for i, e := range columns {
+		if e == table+"_index" {
+			return i
+		}
+	}
+	return -1
+}
+
+func FindTranslationTables(table string, columns []interface{}) []string {
+	var translationTables []string
+	for i := range columns {
+		columnString := fmt.Sprint(columns[i])
+		if strings.HasSuffix(columnString, "_index") {
+			if !strings.HasPrefix(columnString, table) { //dont add the one referencing the table itself
+				translationTables = append(translationTables, strings.TrimSuffix(columnString, "_index"))
+			}
+		}
+	}
+	return translationTables
 }
