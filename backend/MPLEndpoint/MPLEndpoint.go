@@ -7,6 +7,7 @@ import (
 	"backend/utility"
 	"fmt"
 	"net/http"
+	"time"
 )
 
 type sampleRequest struct {
@@ -51,23 +52,26 @@ func FindPartForEdit(header http.Header) (interface{}, error) {
 }
 
 func SaveMPLEdit(header http.Header) (interface{}, error) {
+	defer utility.TimeTrack(time.Now(), "Save")
 	// ranges := []string{"MPLEdit!B10:Z10", "MPLEdit!A12:Z16"}
 	ranges := []string{"MPLEdit!B9:Z9", "MPLEdit!B10:Z10", "MPLEdit!A12:Z16"}
-	values := IPSheets.BatchGet(ranges, MPLID, IPSheets.GetSheetsService(header))
-	// sheetHeaders := IPSheets.BatchGet([]string{"MPLEdit!B10:Z10"}, MPLID, IPSheets.GetSheetsService(header))
-	// fmt.Println(values)
+	read := IPSheets.BatchGet(ranges, MPLID, IPSheets.GetSheetsService(header))
+
+	headerValues := read[:1]
+	values := read[1:]
 	utility.Log(values)
 	// columns := IPDatabase.GetHeaders(db, "parts")
-	headerMap := IPDatabase.GetView(db, "column_map")
-	partIndex := fmt.Sprint(values[0][0][0])
+	headerMapBase := IPDatabase.GetView(db, "column_map")              //collect header collection from db
+	headerMap := utility.BuildMap(headerMapBase, []int{0, 1})          //make a map with the header data
+	columns := utility.RearrangeHeaders(headerMap, headerValues[0][0]) //relabel the sheet headers to the databse headers, in order of sheet
 
-	columns := utility.RearrangeHeaders(headerMap, values[0][0])
-
+	partsValues := IPDatabase.TranslateIndexs(db, []string{"unit", "order_type", "book_type"}, columns, columns[1], headerMap, values[0])
+	partIndex := fmt.Sprint(partsValues[0][0]) //grab index_parts from the collected data
+	utility.Log(columns)
+	utility.Log("Part Index: " + partIndex)
 	if IPDatabase.Exists(db, "parts", partIndex, "index_parts") {
-		for _, section := range values[1:] {
-			for _, row := range section {
-				IPDatabase.Update(db, "parts", partIndex, columns, row)
-			}
+		for _, row := range partsValues {
+			IPDatabase.Update(db, "parts", partIndex, columns, row)
 		}
 	} else {
 		IPDatabase.Insert(db, "parts", columns, values[0])
@@ -91,7 +95,7 @@ func KeywordSearch(header http.Header) (interface{}, error) {
 	keycolumns := []string{"technical_desc", "customer_desc", "name", "part_number"}
 	combiners := []string{"", "OR", ")AND(", "OR"}
 	partData := [][][]interface{}{IPDatabase.MultiLIKE(db, "public.keywordsearch", keys, keycolumns, combiners)}
-	fmt.Print(partData)
+	// fmt.Print(partData)
 	ranges := []string{"KeywordSearch!B10:M10000"}
 	IPSheets.BatchWriteToSheet(partData, ranges, MPLID, srv)
 	return partData, nil
