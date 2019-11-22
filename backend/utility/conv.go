@@ -17,6 +17,13 @@ func IntfToString(data []interface{}) []string {
 	return out
 }
 
+func AddWildCards(array []string) []string { //adds % before and after each string and replaces spaces with %
+	for i, e := range array {
+		array[i] = "'%" + strings.ReplaceAll(e, " ", "%") + "%'"
+	}
+	return array
+}
+
 func RearrangeHeaders(headerMap *bimap.BiMap, sheetsHeaders []interface{}) []interface{} {
 	defer TimeTrack(time.Now(), "rearrange: ")
 	// mapper := BuildMap(headerMap, []int{0, 1})
@@ -43,14 +50,13 @@ func BuildMap(data [][]interface{}, colIndex []int) *bimap.BiMap {
 func ParseNulls(data [][]interface{}) [][]interface{} { //puts '' around data, replaces empty spots with NULL
 	for i, e := range data {
 		for ri, re := range e {
-			if re == "" {
+			if re == "" || re == nil {
 				data[i][ri] = "NULL"
 			} else {
 				data[i][ri] = "'" + fmt.Sprint(re) + "'"
 			}
 		}
 	}
-	Log(data)
 	return data
 }
 
@@ -83,4 +89,28 @@ func FindTranslationTables(table string, columns []interface{}) []string {
 		}
 	}
 	return translationTables
+}
+
+func GetHeaderLocation(columns []interface{}, header string) int {
+	for i, e := range columns {
+		if e == header {
+			return i
+		}
+	}
+	return -1
+}
+
+func OverWriteColumn(data [][]interface{}, value interface{}, column int) [][]interface{} { //fill a colum with a value
+	for i := range data {
+		data[i][column] = value
+	}
+	return data
+}
+
+func MatchSizes(data [][]interface{}, size []interface{}) [][]interface{} {
+	row := make([]interface{}, len(size))
+	for i := range data {
+		data[i] = append(data[i], row[len(data[i]):]...)
+	}
+	return data
 }

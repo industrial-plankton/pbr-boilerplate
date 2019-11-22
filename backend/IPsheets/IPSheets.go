@@ -17,7 +17,6 @@ func WriteToSpreadSheet(SQLData [][]interface{}, rangeData string, spreadsheetId
 
 	// How the input data should be interpreted.
 	valueInputOption := "RAW" //"USER_ENTERED"
-	// rangeData := "'Master Part List'!A2:Y1400"
 	data := SQLData
 
 	rb := &sheets.BatchUpdateValuesRequest{
@@ -35,12 +34,14 @@ func WriteToSpreadSheet(SQLData [][]interface{}, rangeData string, spreadsheetId
 
 	_, err := srv.Spreadsheets.Values.Clear(spreadsheetId, rangeData, cl).Context(ctx).Do()
 	if err != nil {
-		log.Fatal(err)
+		// log.Fatal(err)
+		utility.Log(err)
 	}
 
 	_, err = srv.Spreadsheets.Values.BatchUpdate(spreadsheetId, rb).Context(ctx).Do()
 	if err != nil {
-		log.Fatal(err)
+		// log.Fatal(err)
+		utility.Log(err)
 	}
 
 	// TODO: Change code below to process the `resp` object:
