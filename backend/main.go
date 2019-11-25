@@ -21,7 +21,7 @@ type config struct {
 }
 
 var (
-	port    = "3030"
+	port    = "80"
 	mysqlDB *sqlx.DB
 	env     config
 )
