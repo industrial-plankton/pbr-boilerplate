@@ -34,6 +34,9 @@ func timeTrack(start time.Time, name string) {
 func init() {
 	envconfig.MustProcess("pbr", &env)
 }
+func redirectTLS(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, "https://stuartdehaas.ca"+r.RequestURI, http.StatusMovedPermanently)
+}
 
 func main() {
 	// Setup our database connection
@@ -44,7 +47,10 @@ func main() {
 	apiSubrouterPath := "/api"
 	routerAPI := main.PathPrefix(apiSubrouterPath).Subrouter()
 	routerV1 := routerAPI.PathPrefix("/v1").Subrouter()
-	main.HandleFunc("/test", func(w http.ResponseWriter, req *http.Request) {
+	main.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "https://industrialplankton.com/", 301)
+	})
+	main.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
 		w.Write([]byte("The server is running.\n"))
 	})
@@ -78,7 +84,11 @@ func main() {
 
 	// // Prevents memory leak
 	server.SetKeepAlivesEnabled(false)
-
+	go func() {
+		if err := http.ListenAndServe(":80", http.HandlerFunc(redirectTLS)); err != nil {
+			log.Fatalf("ListenAndServe error: %v", err)
+		}
+	}()
 	// HTTP Rest server
 	log.Fatal(
 		// Serve on the specified port
