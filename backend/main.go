@@ -46,6 +46,8 @@ func main() {
 	routerV1 := routerAPI.PathPrefix("/v1").Subrouter()
 	main.HandleFunc("/test", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
+		w.Write([]byte("The server is running.\n"))
+	})
 
 	// Load our endpoints
 	// sampleEndpoint.Load(routerV1, mysqlDB)
