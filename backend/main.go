@@ -21,7 +21,7 @@ type config struct {
 }
 
 var (
-	port    = "80"
+	port    = "443"
 	mysqlDB *sqlx.DB
 	env     config
 )
@@ -44,7 +44,7 @@ func main() {
 	apiSubrouterPath := "/api"
 	routerAPI := main.PathPrefix(apiSubrouterPath).Subrouter()
 	routerV1 := routerAPI.PathPrefix("/v1").Subrouter()
-	main.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
+	main.HandleFunc("/test", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
 		w.Write([]byte("The server is running.\n"))
 	})
@@ -52,8 +52,6 @@ func main() {
 	// Load our endpoints
 	// sampleEndpoint.Load(routerV1, mysqlDB)
 	MPLEndpoint.Load(routerV1, mysqlDB)
-
-	log.Info("The server is starting, and it will be listening on port " + port)
 
 	cfg := &tls.Config{
 		MinVersion:               tls.VersionTLS12,
@@ -76,12 +74,19 @@ func main() {
 		TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler), 0),
 	}
 
+	log.Info("The server is starting, and it will be listening on port " + port)
+
 	// // Prevents memory leak
 	server.SetKeepAlivesEnabled(false)
 
 	// HTTP Rest server
 	log.Fatal(
 		// Serve on the specified port
-		server.ListenAndServeTLS("server.crt", "server.key"),
+		server.ListenAndServeTLS("/etc/letsencrypt/live/stuartdehaas.ca/fullchain.pem", "/etc/letsencrypt/live/stuartdehaas.ca/privkey.pem"),
 	)
 }
+
+//  /etc/letsencrypt/live/stuartdehaas.ca/fullchain.pem
+// Your key file has been saved at:
+// /etc/letsencrypt/live/stuartdehaas.ca/privkey.pem
+// ip 157.245.171.13:443
