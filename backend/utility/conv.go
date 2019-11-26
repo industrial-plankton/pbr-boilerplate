@@ -17,9 +17,10 @@ func IntfToString(data []interface{}) []string {
 	return out
 }
 
-func AddWildCards(array []string) []string { //adds % before and after each string and replaces spaces with %
+func AddWildCards(array []string) []string { //adds regular expresstion wildcars to begining and end of each word
 	for i, e := range array {
-		array[i] = "'%" + strings.ReplaceAll(e, " ", "%") + "%'"
+		term := strings.ReplaceAll(e, " ", ".*)(.*")
+		array[i] = "'(.*" + strings.TrimSuffix(term, "\n") + ".*)'"
 	}
 	return array
 }

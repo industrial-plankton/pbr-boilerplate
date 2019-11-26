@@ -30,13 +30,21 @@ func FindPartForEdit(header http.Header) (interface{}, error) {
 
 	var partData [][]interface{}
 	partData = append(partData, IPDatabase.GetHeaders(db, "mpltext"))
-	for _, e := range IPDatabase.Search(db, "public.mpltext", partnumindex, "index_parts") { //get the parts data
+	DatabasePartData, err := IPDatabase.Search(db, "public.mpltext", partnumindex, "index_parts")
+	if err != nil {
+		return nil, err
+	}
+	for _, e := range DatabasePartData { //get the parts data
 		partData = append(partData, e)
 	}
 
 	var venderData [][]interface{}
 	venderData = append(venderData, IPDatabase.GetHeaders(db, "partsvendertext"))
-	for _, e := range IPDatabase.Search(db, "public.partsvendertext", SKU, "\"IP SKU\"") { //get the parts vendor data
+	DatabaseVendorData, err := IPDatabase.Search(db, "public.partsvendertext", SKU, "\"IP SKU\"")
+	if err != nil {
+		return nil, err
+	}
+	for _, e := range DatabaseVendorData { //get the parts vendor data
 		venderData = append(venderData, e)
 	}
 	var noArray [][]interface{}
@@ -78,29 +86,43 @@ func SaveMPLEdit(header http.Header) (interface{}, error) {
 	tablesToUpdate := []string{"parts", "parts_vendor"}
 
 	for i := range values {
-		IPDatabase.UpdateOrAdd(db, tablesToUpdate[i], headerMap, values[i], headerValues[i][0])
+		err := IPDatabase.UpdateOrAdd(db, tablesToUpdate[i], headerMap, values[i], headerValues[i][0])
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	for i := range values[1] {
 		if len(deleteFlags) > 0 {
 			if len(deleteFlags[0])-1 > i {
 				if deleteFlags[0][i][0] == "yes" { //check for yes's in the column
-					IPDatabase.Delete(db, tablesToUpdate[1], fmt.Sprint(values[1][i][0])) // send the primaryIndex to be deleted
+					err := IPDatabase.Delete(db, tablesToUpdate[1], fmt.Sprint(values[1][i][0])) // send the primaryIndex to be deleted
+					if err != nil {
+						return nil, err
+					}
 				}
 			}
 		}
 	}
-	header.Set("RequestData", fmt.Sprint(IPDatabase.Search(db, tablesToUpdate[0], fmt.Sprint(sku), "sku")[0][0])) //set header value to SKU for FindPartForEdit
-	FindPartForEdit(header)                                                                                       //write data back to sheet
+	SKU, err := IPDatabase.Search(db, tablesToUpdate[0], fmt.Sprint(sku), "sku") // get SKU
+	if err != nil {
+		return nil, err
+	}
+	header.Set("RequestData", fmt.Sprint(SKU[0][0])) //set header value to SKU for FindPartForEdit
+	_, err = FindPartForEdit(header)                 //write data back to sheet
+	if err != nil {
+		return nil, err
+	}
 
 	return values[0][0][1], nil
 }
 
 func KeywordSearch(header http.Header) (interface{}, error) {
+	defer utility.TimeTrack(time.Now(), "Keyword Search")
 	keyRanges := []string{"KeywordSearch!D1:D2"}
 	srv := IPSheets.GetSheetsService(header)
 	keysInterface := IPSheets.BatchGetCol(keyRanges, MPLID, srv)
-	fmt.Print(keysInterface)
+	// fmt.Print(keysInterface)
 	keys := utility.IntfToString(keysInterface[0][0])
 	for len(keys) < 2 { //append the empty keywords
 		keys = append(keys, "")
@@ -109,8 +131,12 @@ func KeywordSearch(header http.Header) (interface{}, error) {
 	keys = utility.AddWildCards(keys)
 
 	keycolumns := []string{"technical_desc", "customer_desc", "name", "part_number"}
-	combiners := []string{"", "OR", ")AND(", "OR"}
-	partData := [][][]interface{}{IPDatabase.MultiLIKE(db, "public.keywordsearch", keys, keycolumns, combiners)}
+	combiners := []string{"", " OR ", ") AND (", " OR "}
+	SearchResult, err := IPDatabase.MultiLIKE(db, "keywordsearch", keys, keycolumns, combiners)
+	if err != nil {
+		return nil, err
+	}
+	partData := [][][]interface{}{SearchResult}
 
 	ranges := []string{"KeywordSearch!B10:M10000"}
 	IPSheets.BatchWriteToSheet(partData, ranges, MPLID, srv)
