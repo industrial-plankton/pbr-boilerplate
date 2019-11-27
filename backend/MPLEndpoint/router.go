@@ -9,8 +9,15 @@ import (
 
 var (
 	db    *sqlx.DB
-	MPLID string = "1Hi0PrHe53q4JhNetcJ_y3WrDIJ9qocVEd4irMunxVyE"
+	IDMap map[string]string
+	MPLID string = "1Hi0PrHe53q4JhNetcJ_y3WrDIJ9qocVEd4irMunxVyE" //depreciated. Use ID Map
 )
+
+func init() {
+	//map user emails to their personal sheet ID
+	IDMap = make(map[string]string)
+	IDMap["cam@industrialplankton.com"] = "1Hi0PrHe53q4JhNetcJ_y3WrDIJ9qocVEd4irMunxVyE" //Databased Inventory Managment Worksheet
+}
 
 // Load mounts the subrouter on the router and matches each path with a handler
 func Load(router *mux.Router, mysqlDB *sqlx.DB) {

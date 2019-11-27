@@ -9,6 +9,7 @@ import (
 	"backend/postgres"
 	// "backend/sampleEndpoint"
 	"backend/MPLEndpoint"
+	"backend/TeslaEndpoint"
 
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
@@ -58,6 +59,7 @@ func main() {
 	// Load our endpoints
 	// sampleEndpoint.Load(routerV1, mysqlDB)
 	MPLEndpoint.Load(routerV1, mysqlDB)
+	TeslaEndpoint.Load(routerV1, mysqlDB)
 
 	cfg := &tls.Config{
 		MinVersion:               tls.VersionTLS12,
@@ -84,15 +86,15 @@ func main() {
 
 	// // Prevents memory leak
 	server.SetKeepAlivesEnabled(false)
-	go func() {
-		if err := http.ListenAndServe(":80", http.HandlerFunc(redirectTLS)); err != nil {
-			log.Fatalf("ListenAndServe error: %v", err)
-		}
+
+	go func() { //HTTP Rest server redirect to HTTPS
+		log.Fatalf("ListenAndServe error: %v", http.ListenAndServe(":80", http.HandlerFunc(redirectTLS)))
 	}()
-	// HTTP Rest server
-	log.Fatal(
+
+	// HTTPS Rest server
+	log.Fatalf(
 		// Serve on the specified port
-		server.ListenAndServeTLS("/etc/letsencrypt/live/stuartdehaas.ca/fullchain.pem", "/etc/letsencrypt/live/stuartdehaas.ca/privkey.pem"),
+		"ListenAndServeTLS error: %v", server.ListenAndServeTLS("/etc/letsencrypt/live/stuartdehaas.ca/fullchain.pem", "/etc/letsencrypt/live/stuartdehaas.ca/privkey.pem"),
 	)
 }
 

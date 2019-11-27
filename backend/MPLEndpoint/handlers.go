@@ -28,7 +28,7 @@ func MasterPartsListHandle(w http.ResponseWriter, r *http.Request) {
 }
 
 func FindPartForEditHandle(w http.ResponseWriter, r *http.Request) {
-	log.Println("Running get Part!")
+	log.Println(r.Header.Get("UserData") + "Running get Part!")
 	_, err := FindPartForEdit(r.Header)
 	if err != nil {
 		// w.WriteHeader(http.StatusNoContent)

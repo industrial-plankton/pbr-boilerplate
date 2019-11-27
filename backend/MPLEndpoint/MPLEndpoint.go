@@ -15,9 +15,9 @@ type sampleRequest struct {
 }
 
 func RefreshMasterPartsList(header http.Header) ([][]interface{}, error) {
-	// headers := []interface{}{"IP SKU", "Technical Description", "Customer Description", "Supplier (Main)", "Main Supplier PN", "Supplier (Secondary)", "Secondary supplier PN", "Extra Info", "Order Type", "unit", "Cost/unit", "currency", "Cost/ea or ft (CAD)", "Shipping Cost/ea (CAD)", "Sell Markup", "Sell price per ea or ft (USD, calculated)", "HS Code", "Re-order q-ty", "Part Location", "Book Type", "Sell price per ea or ft (USD, Static)"}
-	parts := IPDatabase.GetView(db, "new_view" /*, headers*/)
-	IPSheets.WriteToSpreadSheet(parts, "'Master Part List'!A1:Y2000", MPLID, IPSheets.GetSheetsService(header))
+	parts := IPDatabase.GetView(db, "masterpartslist")
+	IPSheets.WriteToSpreadSheet(parts, "'Master Part List'!A1:Z20000", IDMap[header.Get("UserData")], IPSheets.GetSheetsService(header))
+	utility.Log(header.Get("UserData"))
 	return parts, nil
 }
 
@@ -118,7 +118,6 @@ func SaveMPLEdit(header http.Header) (interface{}, error) {
 }
 
 func KeywordSearch(header http.Header) (interface{}, error) {
-	defer utility.TimeTrack(time.Now(), "Keyword Search")
 	keyRanges := []string{"KeywordSearch!D1:D2"}
 	srv := IPSheets.GetSheetsService(header)
 	keysInterface := IPSheets.BatchGetCol(keyRanges, MPLID, srv)

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	// "time"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/vishalkuo/bimap"
@@ -50,7 +50,7 @@ func Search(mysqlDB *sqlx.DB, table, key, keycolumn string) ([][]interface{}, er
 func MultiLIKE(mysqlDB *sqlx.DB, table string, keys, keycolumns, combiners []string) ([][]interface{}, error) {
 	//KeyColumns should be appended with ::text when relevent
 	//Keys should be in the form 'key', '%key%' or '_key_', _ is single wildcard, % is multi wildcard
-	// defer timeTrack(time.Now(), "MultiSearch")
+	defer utility.TimeTrack(time.Now(), "MultiSearch")
 	conditions := "("
 	for i, e := range keycolumns {
 		conditions = conditions + combiners[i] + " " + e + " ~* " + keys[i]
