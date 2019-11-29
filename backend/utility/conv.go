@@ -115,3 +115,19 @@ func MatchSizes(data [][]interface{}, size []interface{}) [][]interface{} {
 	}
 	return data
 }
+
+func ConcatSplitData(data [][][]interface{}) [][]interface{} { //if data for one table is split accross multiple ranges this will combine them for database entry
+	CombinedData := MatchSizes(data[0], data[0][0]) //initialize CombinedData with the first range and fill in any blanks
+
+	for i := 1; i < len(data); i++ { //loop through remaining ranges
+		for r := range data[i] { //loop through each row
+			if len(data[i]) > len(CombinedData) { //append a row of nulls if CombinedData doesnt have another row
+				nullrow := make([]interface{}, len(CombinedData[0]))
+				CombinedData = append(CombinedData, nullrow)
+			}
+			CombinedData[r] = append(CombinedData[r], data[i][r]...) //add the contents of the new row to CombinedData
+		}
+		CombinedData = MatchSizes(CombinedData, CombinedData[0]) // ensure it is a full rectange
+	}
+	return CombinedData
+}

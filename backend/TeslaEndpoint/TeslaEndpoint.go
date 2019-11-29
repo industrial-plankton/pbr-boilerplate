@@ -19,7 +19,7 @@ func FindShipForEdit(header http.Header) (interface{}, error) {
 	var ranges []string
 
 	PONum := header.Get("RequestData")
-	shipIndex := fmt.Sprint(IPDatabase.Convert(db, "shipments", PONum, "out_num", "index_shipments")[0]) //get the index
+	shipIndex := fmt.Sprint(IPDatabase.Convert(db, "shipments", PONum, "our_num", "index_shipments")[0]) //get the index
 
 	var ShipData [][]interface{}
 	ShipData = append(ShipData, IPDatabase.GetHeaders(db, "shiptext"))
@@ -27,7 +27,7 @@ func FindShipForEdit(header http.Header) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	for _, e := range DatabaseShipData { //insert the database data
+	for _, e := range DatabaseShipData { //append the database data
 		ShipData = append(ShipData, e)
 	}
 
@@ -45,12 +45,14 @@ func FindShipForEdit(header http.Header) (interface{}, error) {
 		noArray = append(noArray, []interface{}{"no"})
 	}
 	//combine data and their ranges for spreadsheet write
-	data = append(data, ShipData)
-	ranges = append(ranges, "MPLEdit!B9:Z10")
+	data = append(data, ShipData[:10])
+	ranges = append(ranges, "'Tesla Generator'!D1:Z2")
+	data = append(data, ShipData[10:])
+	ranges = append(ranges, "'Tesla Generator'!D3:Z4")
 	data = append(data, TrackData)
-	ranges = append(ranges, "MPLEdit!A11:H16")
+	ranges = append(ranges, "'Tesla Generator'!B8:Z50")
 	data = append(data, noArray)
-	ranges = append(ranges, "MPLEdit!I12:I16")
+	ranges = append(ranges, "'Tesla Generator'!I12:I16")
 
 	IPSheets.BatchWriteToSheet(data, ranges, IDMap[header.Get("UserData")], IPSheets.GetSheetsService(header))
 

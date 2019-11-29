@@ -64,3 +64,8 @@ sudo ufw allow 	PORTNUM/tcp
 sudo apt-get install certbot
 sudo certbot certonly --standalone
 
+#for Go_Server
+put credentials.json and connection.md in same folder that backend will run
+#credentials.json comes form google cloud platform, and is what allows authorization to use the sheets API alongside the Oauth2 tokens.
+#connection.md just contains the Database login info
+
