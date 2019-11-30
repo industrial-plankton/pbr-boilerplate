@@ -10,6 +10,8 @@ usermod -aG sudo USERNAME
 
 # firewall enable 
 ufw allow OpenSSH
+ufw allow 443		#https
+ufw allow 80 		#http
 ufw enable
 
 #enable ssh for new user
@@ -58,9 +60,8 @@ archive_command = 'test ! -f /mnt/backup/%f && cp %p /mnt/backup/%f'
 then chmod /mnt/backup/ so the postgres user has write access, i just gave everyone free access with:
 sudo chmod -R 777 /mnt/backup/
 
-#for Go Server firewall rule
-sudo ufw allow 	PORTNUM/tcp
-
+#database side changelog use:
+#https://wiki.postgresql.org/wiki/Audit_trigger_91plus
 
 #for HTTPS
     sudo apt-get update
