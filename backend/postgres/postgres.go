@@ -9,7 +9,7 @@ import (
 )
 
 func NewConnection() *sqlx.DB {
-	b, err := ioutil.ReadFile("connection.md")
+	b, err := ioutil.ReadFile("/home/cameron/Go_Server/connection.md")
 	if err != nil {
 		log.Fatalf("Unable to read client secret file: %v", err)
 	}

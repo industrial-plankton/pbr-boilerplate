@@ -50,8 +50,15 @@ google it, i didnt write it down
 createdb -T template0 NEWDATABASENAME
 psql -d NEWDATABASENAME -1 -f BACKUPFILE
 
+#continuous backups
+open postgresql.conf and set:
+wal_level = replica
+archive_mode = on
+archive_command = 'test ! -f /mnt/backup/%f && cp %p /mnt/backup/%f'
+then chmod /mnt/backup/ so the postgres user has write access, i just gave everyone free access with:
+sudo chmod -R 777 /mnt/backup/
 
-#for Go Server
+#for Go Server firewall rule
 sudo ufw allow 	PORTNUM/tcp
 
 
@@ -68,4 +75,28 @@ sudo certbot certonly --standalone
 put credentials.json and connection.md in same folder that backend will run
 #credentials.json comes form google cloud platform, and is what allows authorization to use the sheets API alongside the Oauth2 tokens.
 #connection.md just contains the Database login info
+
+
+
+####Run Go_server as a service
+sudo nano /etc/systemd/system/Go_Server.service     
+#and paste:
+[Unit]
+Description=Golang Web Server for Database interaction service
+After=network.target
+After=postgresql.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=Always
+RestartSec=2
+ExecStart=/home/cameron/Go_Server/backend
+
+[Install]
+WantedBy=multi-user.target
+
+#then:
+sudo systemctl enable Go_Server
+
 

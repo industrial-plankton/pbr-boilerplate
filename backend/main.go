@@ -10,6 +10,7 @@ import (
 	// "backend/sampleEndpoint"
 	"backend/MPLEndpoint"
 	"backend/TeslaEndpoint"
+	"backend/utility"
 
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
@@ -92,13 +93,9 @@ func main() {
 	}()
 
 	// HTTPS Rest server
-	log.Fatalf(
-		// Serve on the specified port
-		"ListenAndServeTLS error: %v", server.ListenAndServeTLS("/etc/letsencrypt/live/stuartdehaas.ca/fullchain.pem", "/etc/letsencrypt/live/stuartdehaas.ca/privkey.pem"),
-	)
+	err := server.ListenAndServeTLS("/etc/letsencrypt/live/industrialplankton.ca/fullchain.pem", "/etc/letsencrypt/live/industrialplankton.ca/privkey.pem")
+	if err != nil {
+		utility.Log(err)
+		log.Fatalf("ListenAndServeTLS error: %v", err)
+	}
 }
-
-//  /etc/letsencrypt/live/stuartdehaas.ca/fullchain.pem
-// Your key file has been saved at:
-// /etc/letsencrypt/live/stuartdehaas.ca/privkey.pem
-// ip 157.245.171.13:443
