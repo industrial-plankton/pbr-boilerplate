@@ -49,9 +49,12 @@ func main() {
 	apiSubrouterPath := "/api"
 	routerAPI := main.PathPrefix(apiSubrouterPath).Subrouter()
 	routerV1 := routerAPI.PathPrefix("/v1").Subrouter()
+
+	//Industrial Plankton.com redirect
 	main.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "https://industrialplankton.com/", 301)
 	})
+	//Website Test Page, Nonessential
 	main.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
 		w.Write([]byte("The server is running.\n"))
@@ -62,6 +65,7 @@ func main() {
 	MPLEndpoint.Load(routerV1, mysqlDB)
 	TeslaEndpoint.Load(routerV1, mysqlDB)
 
+	//configure HTTPS Settings
 	cfg := &tls.Config{
 		MinVersion:               tls.VersionTLS12,
 		CurvePreferences:         []tls.CurveID{tls.CurveP521, tls.CurveP384, tls.CurveP256},
@@ -74,6 +78,7 @@ func main() {
 		},
 	}
 
+	//configure server settings
 	server := &http.Server{
 		Addr:         ":" + port,
 		Handler:      main, //routerAPI,
@@ -82,13 +87,13 @@ func main() {
 		TLSConfig:    cfg,
 		TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler), 0),
 	}
-
-	log.Info("The server is starting, and it will be listening on port " + port)
-
 	// // Prevents memory leak
 	server.SetKeepAlivesEnabled(false)
 
-	go func() { //HTTP Rest server redirect to HTTPS
+	log.Info("The server is starting, and it will be listening on port " + port)
+
+	//HTTP redirect to HTTPS
+	go func() {
 		log.Fatalf("ListenAndServe error: %v", http.ListenAndServe(":80", http.HandlerFunc(redirectTLS)))
 	}()
 

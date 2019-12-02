@@ -29,7 +29,7 @@ func GetHeaders(mysqlDB *sqlx.DB, table string) []interface{} { //returns header
 	return headers
 }
 
-func GetView(mysqlDB *sqlx.DB, view string /*, headers []interface{}*/) [][]interface{} { //returns entire view
+func GetView(mysqlDB *sqlx.DB, view string /*, headers []interface{}*/) [][]interface{} { //returns entire view with headers
 	// defer timeTrack(time.Now(), "View "+view)
 	SQL := "SELECT * FROM " + view
 	values, _ := headerQuery(mysqlDB, SQL, view)
@@ -110,7 +110,7 @@ func Update(mysqlDB *sqlx.DB, table, primarykey string, columns, data []interfac
 	return nil
 }
 
-func Convert(mysqlDB *sqlx.DB, table, key, keycolumn, endcolumn string) []interface{} {
+func Convert(mysqlDB *sqlx.DB, table, key, keycolumn, endcolumn string) []interface{} { //Finds Key in Keycolumn and returns the data in endcolumn
 	// defer timeTrack(time.Now(), "Convert "+key+" to "+endcolumn)
 	// var value []interface{}
 
@@ -191,7 +191,7 @@ func getPrimaryKeyColumnName(mysqlDB *sqlx.DB, table string) string { //returns 
 	return fmt.Sprint(primarykey[0][0])
 }
 
-func standQuery(mysqlDB *sqlx.DB, SQL string) ([][]interface{}, error) {
+func standQuery(mysqlDB *sqlx.DB, SQL string) ([][]interface{}, error) { //Standard Querry, executes SQL string as a querry and returns the data
 	var values [][]interface{}
 	rows, err := mysqlDB.Queryx(SQL)
 	if err != nil {
