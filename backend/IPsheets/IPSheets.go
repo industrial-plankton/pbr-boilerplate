@@ -83,6 +83,50 @@ func BatchWriteToSheet(SQLData [][][]interface{}, rangeData []string, spreadshee
 	// fmt.Printf("%#v\n", resp)
 }
 
+func BatchWriteToSheetNoClear(SQLData [][][]interface{}, rangeData []string, spreadsheetId string, srv *sheets.Service) {
+	defer utility.TimeTrack(time.Now(), "Batch Write to sheet without clearing")
+	ctx := context.Background()
+
+	// How the input data should be interpreted.
+	valueInputOption := "RAW" //"USER_ENTERED"
+
+	rb := &sheets.BatchUpdateValuesRequest{
+		ValueInputOption: valueInputOption,
+	}
+
+	// The combine ValueRanges.
+	for i, e := range rangeData {
+		rb.Data = append(rb.Data, &sheets.ValueRange{
+			Range:  e,
+			Values: SQLData[i],
+		})
+	}
+
+	_, err := srv.Spreadsheets.Values.BatchUpdate(spreadsheetId, rb).Context(ctx).Do()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// TODO: Change code below to process the `resp` object:
+	// fmt.Printf("%#v\n", resp)
+}
+
+func ClearRange(rangeData []string, spreadsheetId string, srv *sheets.Service, ch chan bool) {
+	defer utility.TimeTrack(time.Now(), "Clear Ranges")
+	ctx := context.Background()
+	cl := &sheets.ClearValuesRequest{
+		// TODO: Add desired fields of the request body.
+	}
+
+	for _, e := range rangeData {
+		_, err := srv.Spreadsheets.Values.Clear(spreadsheetId, e, cl).Context(ctx).Do()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+	ch <- true
+}
+
 func BatchGet(rangeData []string, spreadsheetId string, srv *sheets.Service) [][][]interface{} {
 	defer utility.TimeTrack(time.Now(), "Batch Read from sheet")
 	ctx := context.Background()

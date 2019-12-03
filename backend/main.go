@@ -37,7 +37,7 @@ func init() {
 	envconfig.MustProcess("pbr", &env)
 }
 func redirectTLS(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, "https://stuartdehaas.ca"+r.RequestURI, http.StatusMovedPermanently)
+	http.Redirect(w, r, "https://industrialplankton.com"+r.RequestURI, http.StatusMovedPermanently)
 }
 
 func main() {
@@ -52,7 +52,7 @@ func main() {
 
 	//Industrial Plankton.com redirect
 	main.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "https://industrialplankton.com/", 301)
+		redirectTLS(w, r)
 	})
 	//Website Test Page, Nonessential
 	main.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {

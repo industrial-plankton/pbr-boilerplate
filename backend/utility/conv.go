@@ -37,7 +37,7 @@ func RearrangeHeaders(headerMap *bimap.BiMap, sheetsHeaders []interface{}) []int
 	return headers
 }
 
-func BuildMap(data [][]interface{}, colIndex []int) *bimap.BiMap {
+func BuildMap(data [][]interface{}, colIndex []int) *bimap.BiMap { //Creates a map of Text and Index, assumes index is farthest right if not specified
 	biMap := bimap.NewBiMap()
 	if len(colIndex) == 1 {
 		colIndex = append(colIndex, len(data[0])-1)
@@ -108,16 +108,43 @@ func OverWriteColumn(data [][]interface{}, value interface{}, column int) [][]in
 	return data
 }
 
-func MatchSizes(data [][]interface{}, size []interface{}) [][]interface{} {
-	row := make([]interface{}, len(size))
+func FillifEmpty(data [][]interface{}, value interface{}, column int) [][]interface{} {
 	for i := range data {
-		data[i] = append(data[i], row[len(data[i]):]...)
+		if data[i][column] == nil || data[i][column] == "" {
+			continue
+		}
+		data[i][column] = value
 	}
 	return data
 }
 
-func ConcatSplitData(data [][][]interface{}) [][]interface{} { //if data for one table is split accross multiple ranges this will combine them for database entry
-	CombinedData := MatchSizes(data[0], data[0][0]) //initialize CombinedData with the first range and fill in any blanks
+func MatchSizes(data [][]interface{}, size []interface{}) [][]interface{} { //ensures rectangle interface by adding nulls
+	row := make([]interface{}, len(size))
+	for i := range data {
+		if len(data[i]) < len(size) {
+			data[i] = append(data[i], row[len(data[i]):]...)
+		} else {
+			data[i] = data[i][:len(size)]
+		}
+	}
+	return data
+}
+
+func SetSize(data [][]interface{}, size int) [][]interface{} {
+	row := make([]interface{}, size)
+	for i := range data {
+		if len(data[i]) < size {
+			data[i] = append(data[i], row[len(data[i]):]...)
+		} else {
+			data[i] = data[i][:size]
+		}
+
+	}
+	return data
+}
+
+func ConcatSplitData(data [][][]interface{}) [][]interface{} { //if data for one table is split accross multiple ranges this will combine them for database entry, only use rectangular matrixs
+	CombinedData := data[0] //initialize CombinedData with the first range
 
 	for i := 1; i < len(data); i++ { //loop through remaining ranges
 		for r := range data[i] { //loop through each row
@@ -127,7 +154,6 @@ func ConcatSplitData(data [][][]interface{}) [][]interface{} { //if data for one
 			}
 			CombinedData[r] = append(CombinedData[r], data[i][r]...) //add the contents of the new row to CombinedData
 		}
-		CombinedData = MatchSizes(CombinedData, CombinedData[0]) // ensure it is a full rectange
 	}
 	return CombinedData
 }

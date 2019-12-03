@@ -253,7 +253,12 @@ func TranslateIndexs(mysqlDB *sqlx.DB, translationTables []string, columns []int
 	maps := make([]*bimap.BiMap, len(translationTables))
 	datalocations := make([]int, len(translationTables))
 	for i := range maps {
-		maps[i] = utility.BuildMap(GetView(mysqlDB, translationTables[i]), []int{0}) // build translation maps //if index column not furthest right will need to relogic this
+		switch translationTables[i] {
+		case "shipments":
+			maps[i] = utility.BuildMap(GetView(mysqlDB, translationTables[i]), []int{4, 0}) // build translation maps //if index column not furthest right will need to relogic this
+		default:
+			maps[i] = utility.BuildMap(GetView(mysqlDB, translationTables[i]), []int{0}) // build translation maps //if index column not furthest right will need to relogic this
+		}
 	}
 
 	for i, e := range columns { //go through columns and save index locations, convert keycolumn to non-index header

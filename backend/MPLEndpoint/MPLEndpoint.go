@@ -79,7 +79,7 @@ func SaveMPLEdit(header http.Header) (interface{}, error) {
 
 	sku := values[0][0][1] //save the SKU from sheets
 	//TODO: should do a autogeneration of SKU here
-	utility.OverWriteColumn(values[1], sku, utility.GetHeaderLocation(headerValues[1][0], "IP SKU")) //write SKU into the vendor locations
+	utility.OverWriteColumn(values[1], sku, utility.GetHeaderLocation(headerValues[1][0], "IP SKU")) //write SKU into the vendor locations for linking
 
 	headerMapBase := IPDatabase.GetView(db, "column_map")     //collect header collection from db
 	headerMap := utility.BuildMap(headerMapBase, []int{0, 1}) //make a map with the header data
