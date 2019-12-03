@@ -47,6 +47,16 @@ func Search(mysqlDB *sqlx.DB, table, key, keycolumn string) ([][]interface{}, er
 	return values, nil
 }
 
+func Filter(mysqlDB *sqlx.DB, table, key, keycolumn string) ([][]interface{}, error) {
+	// defer timeTrack(time.Now(), "Search for "+key)
+	SQL := "SELECT " + keycolumn + " FROM " + table + " t WHERE t." + keycolumn + " ~* '" + key + "' ORDER BY " + keycolumn
+	values, err := standQuery(mysqlDB, SQL)
+	if err != nil {
+		return values, err
+	}
+	return values, nil
+}
+
 func MultiLIKE(mysqlDB *sqlx.DB, table string, keys, keycolumns, combiners []string) ([][]interface{}, error) {
 	//KeyColumns should be appended with ::text when relevent
 	//Keys should be in the form 'key', '%key%' or '_key_', _ is single wildcard, % is multi wildcard

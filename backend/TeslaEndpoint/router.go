@@ -23,4 +23,5 @@ func Load(router *mux.Router, mysqlDB *sqlx.DB) {
 	db = mysqlDB
 	router.HandleFunc("/Tesla", FindShipForEditHandle).Headers("RequestType", "findShipForEdit") //.Methods(http.MethodGet)
 	router.HandleFunc("/Tesla", SaveTeslaEditHandle).Headers("RequestType", "SaveTeslaEdit")     //.Methods(http.MethodGet)
+	router.HandleFunc("/Tesla", SearchPOsHandle).Headers("RequestType", "SearchPOs")
 }

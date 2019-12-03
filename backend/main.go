@@ -8,6 +8,7 @@ import (
 
 	"backend/postgres"
 	// "backend/sampleEndpoint"
+	"backend/DataValidationEndpoint"
 	"backend/MPLEndpoint"
 	"backend/TeslaEndpoint"
 	"backend/utility"
@@ -64,6 +65,7 @@ func main() {
 	// sampleEndpoint.Load(routerV1, mysqlDB)
 	MPLEndpoint.Load(routerV1, mysqlDB)
 	TeslaEndpoint.Load(routerV1, mysqlDB)
+	DataValidationEndpoint.Load(routerV1, mysqlDB)
 
 	//configure HTTPS Settings
 	cfg := &tls.Config{

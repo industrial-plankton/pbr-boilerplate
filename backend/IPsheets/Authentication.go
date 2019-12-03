@@ -2,14 +2,14 @@ package IPSheets
 
 import (
 	// "encoding/json"
-	"fmt"
+	// "fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 
 	// "os"
-	"strconv"
-	"time"
+	// "strconv"
+	// "time"
 
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
@@ -23,13 +23,13 @@ func tokenFromString(Auth http.Header) *oauth2.Token {
 	AuthT := &oauth2.Token{}
 	//Convert Headers token parameters to an actual token
 	AuthT.AccessToken = Auth.Get("AccessToken")
-	expiry, err := strconv.ParseInt(Auth.Get("Expiry"), 10, 64)
-	if err != nil {
-		fmt.Println(err)
-		panic(err)
-	}
-	AuthT.Expiry = time.Unix(expiry, 0)
-	AuthT.RefreshToken = Auth.Get("RefreshToken")
+	// expiry, err := strconv.ParseInt(Auth.Get("Expiry"), 10, 64)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	panic(err)
+	// }
+	// AuthT.Expiry = time.Unix(expiry, 0)
+	// AuthT.RefreshToken = Auth.Get("RefreshToken")
 	AuthT.TokenType = "Bearer" //Tokens are always Bearer Type
 	// decoder := json.NewDecoder(strings.NewReader(Auth))
 	// err := decoder.Decode(&AuthT)

@@ -174,3 +174,33 @@ func SaveTeslaEdit(header http.Header) (interface{}, error) {
 
 	return ShipValues[0][1], nil
 }
+
+func SearchPOs(header http.Header) (interface{}, error) {
+	defer utility.TimeTrack(time.Now(), "PO Search")
+	PONum := header.Get("RequestData")
+	srv := IPSheets.GetSheetsService(header)
+	ranges := []string{"'Search Tree'!A1:A100"}
+
+	// ch := make(chan bool)
+	// IPSheets.ClearRange(ranges, IDMap[header.Get("UserData")], srv, ch)
+
+	var ShipData [][]interface{}
+	ShipData, err := IPDatabase.Filter(db, "public.shipments", PONum, "our_num")
+	if err != nil {
+		return nil, err
+	}
+	utility.Log(ShipData)
+
+	//combine data and their ranges for spreadsheet write
+	data := make([][][]interface{}, 1)
+	if len(ShipData) > 100 {
+		ShipData = ShipData[:100]
+	}
+	data[0] = ShipData
+	utility.Log(data)
+	utility.Log(ranges)
+	// <-ch
+	IPSheets.BatchWriteToSheet(data, ranges, IDMap[header.Get("UserData")], srv)
+
+	return nil, nil
+}

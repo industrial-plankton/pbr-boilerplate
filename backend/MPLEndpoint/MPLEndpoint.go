@@ -22,8 +22,13 @@ func RefreshMasterPartsList(header http.Header) ([][]interface{}, error) {
 }
 
 func FindPartForEdit(header http.Header) (interface{}, error) {
+	defer utility.TimeTrack(time.Now(), "Find Part")
 	var data [][][]interface{}
 	var ranges []string
+	srv := IPSheets.GetSheetsService(header)
+
+	ch := make(chan bool)
+	go IPSheets.ClearRange([]string{"MPLEdit!B9:Z10", "MPLEdit!A11:I16"}, IDMap[header.Get("UserData")], srv, ch)
 
 	SKU := header.Get("RequestData")
 	partnumindex := fmt.Sprint(IPDatabase.Convert(db, "parts", SKU, "sku", "index_parts")[0]) //get the parts index
@@ -59,7 +64,8 @@ func FindPartForEdit(header http.Header) (interface{}, error) {
 	data = append(data, noArray)
 	ranges = append(ranges, "MPLEdit!I12:I16")
 
-	IPSheets.BatchWriteToSheet(data, ranges, MPLID, IPSheets.GetSheetsService(header))
+	<-ch
+	IPSheets.BatchWriteToSheetNoClear(data, ranges, IDMap[header.Get("UserData")], srv)
 
 	return data[0][0][1], nil
 }
@@ -118,8 +124,14 @@ func SaveMPLEdit(header http.Header) (interface{}, error) {
 }
 
 func KeywordSearch(header http.Header) (interface{}, error) {
+	defer utility.TimeTrack(time.Now(), "Keyword Search")
 	keyRanges := []string{"KeywordSearch!D1:D2"}
+	ranges := []string{"KeywordSearch!B10:M10000"}
 	srv := IPSheets.GetSheetsService(header)
+
+	ch := make(chan bool)
+	go IPSheets.ClearRange(ranges, IDMap[header.Get("UserData")], srv, ch)
+
 	keysInterface := IPSheets.BatchGetCol(keyRanges, MPLID, srv)
 	// fmt.Print(keysInterface)
 	keys := utility.IntfToString(keysInterface[0][0])
@@ -137,7 +149,7 @@ func KeywordSearch(header http.Header) (interface{}, error) {
 	}
 	partData := [][][]interface{}{SearchResult}
 
-	ranges := []string{"KeywordSearch!B10:M10000"}
-	IPSheets.BatchWriteToSheet(partData, ranges, MPLID, srv)
+	<-ch
+	IPSheets.BatchWriteToSheetNoClear(partData, ranges, IDMap[header.Get("UserData")], srv)
 	return partData, nil
 }
