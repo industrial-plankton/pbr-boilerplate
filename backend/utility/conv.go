@@ -177,8 +177,8 @@ func ConcatSplitData(data [][][]interface{}) [][]interface{} {
 	return CombinedData
 }
 
-//ParseJSON , a heavily error checking JSON Parser
-func ParseJSON(w http.ResponseWriter, r *http.Request, data interface{}) {
+//CheckJSON , a heavily error checking JSON Parser
+func CheckJSON(w http.ResponseWriter, r *http.Request, data interface{}) {
 	// If the Content-Type header is present, check that it has the value
 	// application/json. Note that we are using the gddo/httputil/header
 	// package to parse and extract the value here, so the check works
