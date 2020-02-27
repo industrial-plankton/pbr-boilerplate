@@ -5,6 +5,7 @@ go 1.12
 require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/go-sql-driver/mysql v1.4.0
+	github.com/golang/gddo v0.0.0-20200219175727-df439dd5819e
 	github.com/gorilla/mux v1.7.3
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/json-iterator/go v1.1.6

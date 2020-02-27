@@ -74,7 +74,7 @@ func main() {
 	// with "/assets/", instead of the absolute route itself
 	main.Handle("/assets/", staticFileHandler)
 	main.HandleFunc("/bird", getBirdHandler).Methods("GET")
-	//main.HandleFunc("/bird", createBirdHandler).Methods("POST")
+	main.HandleFunc("/tokensignin", tokensignin).Methods("POST")
 	//main.HandleFunc("/birdup", updateBirdHandler).Methods("POST")
 
 	// Load our endpoints
