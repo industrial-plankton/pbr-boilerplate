@@ -2,13 +2,21 @@ package main
 
 import (
 	"backend/IPDatabase"
+	"backend/utility"
 	"fmt"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/golang/gddo/httputil/header"
 	json "github.com/json-iterator/go" //
-	//	"encoding/json"
+
+	//"encoding/json"
+	verify "github.com/futurenda/google-auth-id-token-verifier"
 )
+
+//so the package is used no mater what
+var _ = verify.Certs{}
 
 type table struct {
 	Data    [][]interface{} `json:"data"`
@@ -18,6 +26,9 @@ type table struct {
 type auth struct {
 	Idtoken string `json:"id_token"`
 }
+
+//AuthorizedDomain , the only sign ins we should give authorization for are emails wth  @industrialplankton.com
+const AuthorizedDomain = "@industrialplankton.com"
 
 func getBirdHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
@@ -35,11 +46,11 @@ func getBirdHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
 	w.Write(jsonObj)
 }
 
 func tokensignin(w http.ResponseWriter, r *http.Request) {
+	defer utility.TimeTrack(time.Now(), "tokensignin")
 	w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
 
 	// If the Content-Type header is present, check that it has the value
@@ -74,6 +85,7 @@ func tokensignin(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Println(err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
 	// Check that the request body only contained a single JSON object.
@@ -83,17 +95,26 @@ func tokensignin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println("Token: ")
-	fmt.Println(token)
-
-	resp, err := http.Get("https://oauth2.googleapis.com/tokeninfo?id_token=" + token.Idtoken)
+	v := verify.Verifier{}
+	aud := "1095332051856-mgt08ppg80t5je1co4h388kujqu43ia8.apps.googleusercontent.com"
+	err = v.VerifyIDToken(token.Idtoken, []string{
+		aud,
+	})
 	if err != nil {
-		fmt.Println(err)
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
 	}
-	defer resp.Body.Close()
-	fmt.Println("ID validation response: ")
-	fmt.Println(resp)
 
-	fmt.Println("ResponseWriter: ")
-	fmt.Println(w)
+	claimSet, _ := verify.Decode(token.Idtoken)
+	// claimSet.Iss,claimSet.Email ... (See claimset.go)
+
+	if claimSet.EmailVerified && strings.Contains(claimSet.Email, AuthorizedDomain) {
+		//You are verifiyed as part of @industrialplankton.com
+	} else {
+		http.Error(w, "You are not part of our domain", http.StatusUnauthorized)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+
 }

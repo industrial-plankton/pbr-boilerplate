@@ -21,7 +21,7 @@ func Log(info interface{}) { //Prints to logfile
 	log.Println(info) //print to file
 }
 
-//TimeTrack logs function time. to use-> defer timeTrack(time.Now(), "label") at start of function
+//TimeTrack logs function time, to use-> defer timeTrack(time.Now(), "label") at start of function
 func TimeTrack(start time.Time, name string) {
 	elapsed := time.Since(start)
 	fmt.Println(name, " took ", elapsed)

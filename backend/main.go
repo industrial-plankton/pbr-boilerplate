@@ -2,7 +2,6 @@ package main
 
 import (
 	"crypto/tls"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -28,11 +27,6 @@ var (
 	mysqlDB *sqlx.DB
 	env     config
 )
-
-func timeTrack(start time.Time, name string) {
-	elapsed := time.Since(start)
-	fmt.Println(name, " took ", elapsed)
-}
 
 func init() {
 	envconfig.MustProcess("pbr", &env)
@@ -72,9 +66,9 @@ func main() {
 	staticFileHandler := http.StripPrefix("/assets/", http.FileServer(staticFileDirectory))
 	// The "PathPrefix" method acts as a matcher, and matches all routes starting
 	// with "/assets/", instead of the absolute route itself
-	main.Handle("/assets/", staticFileHandler)
+	main.Handle("/assets/", http.TimeoutHandler(http.Handler(staticFileHandler), 2*time.Second, "Timeout!\n"))
 	main.HandleFunc("/bird", getBirdHandler).Methods("GET")
-	main.HandleFunc("/tokensignin", tokensignin).Methods("POST")
+	main.Handle("/tokensignin", http.TimeoutHandler(http.HandlerFunc(tokensignin), 2*time.Second, "Timeout!\n")).Methods("POST")
 	//main.HandleFunc("/birdup", updateBirdHandler).Methods("POST")
 
 	// Load our endpoints
@@ -100,8 +94,8 @@ func main() {
 	server := &http.Server{
 		Addr:         ":" + port,
 		Handler:      main, //routerAPI,
-		WriteTimeout: 15 * time.Second,
-		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 5 * time.Second,
+		ReadTimeout:  5 * time.Second,
 		TLSConfig:    cfg,
 		TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler), 0),
 	}

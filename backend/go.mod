@@ -4,6 +4,7 @@ go 1.12
 
 require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/futurenda/google-auth-id-token-verifier v0.0.0-20170311140316-2a5b89f28b7e
 	github.com/go-sql-driver/mysql v1.4.0
 	github.com/golang/gddo v0.0.0-20200219175727-df439dd5819e
 	github.com/gorilla/mux v1.7.3
