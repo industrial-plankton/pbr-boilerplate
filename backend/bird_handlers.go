@@ -5,10 +5,12 @@ import (
 	"backend/utility"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/golang/gddo/httputil/header"
+	"github.com/gorilla/sessions"
 	json "github.com/json-iterator/go" //
 
 	//"encoding/json"
@@ -17,6 +19,7 @@ import (
 
 //so the package is used no mater what
 var _ = verify.Certs{}
+var store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))
 
 type table struct {
 	Data    [][]interface{} `json:"data"`
@@ -49,8 +52,10 @@ func getBirdHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonObj)
 }
 
-func tokensignin(w http.ResponseWriter, r *http.Request) {
-	defer utility.TimeTrack(time.Now(), "tokensignin")
+func tokenSignIn(w http.ResponseWriter, r *http.Request) {
+	defer utility.TimeTrack(time.Now(), "tokenSignIn")
+	fmt.Println(r)
+
 	w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
 
 	// If the Content-Type header is present, check that it has the value
@@ -109,12 +114,68 @@ func tokensignin(w http.ResponseWriter, r *http.Request) {
 	// claimSet.Iss,claimSet.Email ... (See claimset.go)
 
 	if claimSet.EmailVerified && strings.Contains(claimSet.Email, AuthorizedDomain) {
-		//You are verifiyed as part of @industrialplankton.com
+		//You are verified as part of @industrialplankton.com
 	} else {
 		http.Error(w, "You are not part of our domain", http.StatusUnauthorized)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	// Get a session. Get() always returns a session, even if empty.
+	session, err := store.Get(r, claimSet.Sub)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	// fmt.Println(session.Values[42])
+	// fmt.Println(session.Values[claimSet])
 
+	// Set some session values.
+	// session.Values["foo"] = "bar"
+	// session.Values[42] = 43
+
+	// Save it before we write to the response/return from the handler.
+	err = session.Save(r, w)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	fmt.Println(session)
+
+	addCookie(w, "session-name", claimSet.Sub)
+	fmt.Println(w)
+	w.WriteHeader(http.StatusOK)
+}
+
+func tokenSignOut(w http.ResponseWriter, r *http.Request) {
+	Sub, err := r.Cookie("session-name")
+
+	session, err := store.Get(r, Sub.Value)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	// fmt.Println(session.Values[42])
+	// fmt.Println(session.Values[claimSet])
+
+	// Set some session values.
+	// session.Values["foo"] = "bar"
+	// session.Values[42] = 43
+	session.Options.MaxAge = -1
+	// Save it before we write to the response/return from the handler.
+	err = session.Save(r, w)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	addCookie(w, "session-name", "")
+}
+
+func addCookie(w http.ResponseWriter, name string, value string) {
+	expire := time.Now().AddDate(0, 0, 1)
+	cookie := http.Cookie{
+		Name:    name,
+		Value:   value,
+		Expires: expire,
+	}
+	http.SetCookie(w, &cookie)
 }

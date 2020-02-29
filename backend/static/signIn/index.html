@@ -27,7 +27,7 @@
       var id_token = googleUser.getAuthResponse().id_token;
      // console.log("ID Token: " + id_token);
 
-      fetch('https://industrialplankton.ca/tokensignin', {
+      fetch('https://industrialplankton.ca/tokenSignIn', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -38,6 +38,10 @@
      // console.log("Script Done");
     }
     function signOut() {
+      fetch('https://industrialplankton.ca/tokenSignOut', {
+        method: 'GET'
+      })
+
       var auth2 = gapi.auth2.getAuthInstance();
       auth2.signOut().then(function () {
         console.log('User signed out.');
