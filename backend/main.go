@@ -26,11 +26,18 @@ type config struct {
 }
 
 var (
-	port    = "443"
 	mysqlDB *sqlx.DB
 	env     config
-	entry   string = "signIn/index.html"               //entrypoint to server, combine with static
-	static  string = "/home/cameron/Go_Server/static/" //directory to serve static files from
+	// store   *sessions.CookieStore
+)
+
+const (
+	port             string = "443"
+	aud              string = "1095332051856-mgt08ppg80t5je1co4h388kujqu43ia8.apps.googleusercontent.com"
+	entry            string = "/signIn/index.html"             //entrypoint to server, combine with static
+	static           string = "/home/cameron/Go_Server/static" //directory to serve static files from
+	signIn           string = "/signIn/"
+	authorizedDomain string = "@industrialplankton.com"
 )
 
 func init() {
@@ -40,46 +47,28 @@ func init() {
 		os.Setenv("SESSION_KEY", string(securecookie.GenerateRandomKey(32)))
 	}
 	fmt.Println(os.Getenv("SESSION_KEY"))
+	// store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))
 }
 func redirectTLS(w http.ResponseWriter, r *http.Request) {
+	utility.TimeTrack(time.Now(), "http redirect")
 	http.Redirect(w, r, "https://industrialplankton.com"+r.RequestURI, http.StatusMovedPermanently)
 }
 
 func indexHandler(entrypoint string) func(w http.ResponseWriter, r *http.Request) {
+	utility.TimeTrack(time.Now(), "Catch all handle")
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, static+entrypoint)
+		http.Redirect(w, r, "https://industrialplankton.ca"+signIn, http.StatusNotFound)
 	}
 	return http.HandlerFunc(fn)
 }
 
 func faviconHandler(w http.ResponseWriter, r *http.Request) {
+	utility.TimeTrack(time.Now(), "Serve Icon")
 	http.ServeFile(w, r, static+"favicon.ico")
 }
 
-type authenticationMiddleware struct {
-}
-
-//AuthMiddleware checks for current session
-func (amw *authenticationMiddleware) AuthMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		token, err := r.Cookie("session-name")
-
-		if err == nil {
-			_, err := r.Cookie(token.Value)
-			if err == nil {
-				// We found the token in our map
-				// log.Printf("Authenticated user %s\n", user)
-				// Pass down the request to the next middleware (or final handler)
-				next.ServeHTTP(w, r)
-			} else {
-				http.ServeFile(w, r, static+entry)
-			}
-		} else {
-			//Serve the signIn page
-			http.ServeFile(w, r, static+entry)
-			// http.Error(w, "Forbidden", http.StatusForbidden)
-		}
-	})
+func timedHandler(Handler http.HandlerFunc, timeOut int) http.Handler {
+	return http.TimeoutHandler(http.HandlerFunc(Handler), time.Duration(timeOut)*time.Second, "Timeout!\n")
 }
 
 func main() {
@@ -91,12 +80,18 @@ func main() {
 	apiSubrouterPath := "/api"
 	routerAPI := main.PathPrefix(apiSubrouterPath).Subrouter()
 	routerV1 := routerAPI.PathPrefix("/v1").Subrouter()
+	authRouter := main.Host("industrialplankton.ca").PathPrefix("/auth").Subrouter()
+	Protected := main.Host("industrialplankton.ca").PathPrefix("/prot").Subrouter()
+	Protected.Use(AuthMiddleware)
+	ProtectedAPI := Protected.PathPrefix(apiSubrouterPath).PathPrefix("/v1").Subrouter()
+	//catchAll := main.PathPrefix("/").Subrouter()
 
 	//Serve flavor icon
 	main.HandleFunc("/favicon.ico", faviconHandler)
 
-	//Industrial Plankton.com redirect
+	//IndustrialPlankton.com redirect
 	main.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println(".com redirect")
 		redirectTLS(w, r)
 	})
 	//Website Test Page, Nonessential
@@ -104,8 +99,9 @@ func main() {
 		w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
 		w.Write([]byte("The server is running.\n"))
 	})
+	main.Handle("/signIn/", http.TimeoutHandler(http.Handler(http.FileServer(http.Dir(static))), 2*time.Second, "Timeout!\n"))
 
-	staticFileDirectory := http.Dir(static)
+	// //staticFileDirectory := http.Dir(static)
 	// Declare the handler, that routes requests to their respective filename.
 	// The fileserver is wrapped in the `stripPrefix` method, because we want to
 	// remove the "/assets/" prefix when looking for files.
@@ -115,20 +111,22 @@ func main() {
 	// staticFileHandler := http.StripPrefix("/assets/")
 	// The "PathPrefix" method acts as a matcher, and matches all routes starting
 	// with "/assets/", instead of the absolute route itself
-	main.Handle("/assets/", http.TimeoutHandler(http.Handler(http.FileServer(staticFileDirectory)), 2*time.Second, "Timeout!\n"))
-	main.HandleFunc("/bird", getBirdHandler).Methods("GET")
-	main.Handle("/tokenSignIn", http.TimeoutHandler(http.HandlerFunc(tokenSignIn), 2*time.Second, "Timeout!\n")).Methods("POST")
-	main.Handle("/tokenSignOut", http.TimeoutHandler(http.HandlerFunc(tokenSignOut), 2*time.Second, "Timeout!\n")).Methods("GET")
-	//main.HandleFunc("/birdUp", updateBirdHandler).Methods("POST")
 
-	// Catch-all: Serve our JavaScript application's entry-point (index.html).
+	//	// Protected.HandleFunc("/assets/", func(w http.ResponseWriter, r *http.Request) {
+	//	// 	(http.ServeFile(w, r, static+r.RequestURI))
+	//	// })
+	Protected.Handle("/assets/", http.TimeoutHandler(http.Handler(http.FileServer(http.Dir(static))), 2*time.Second, "Timeout!\n"))
+	ProtectedAPI.Handle("/MPL", timedHandler(getMPLHandler, 5)).Methods("GET")
+	authRouter.Handle("/tokenSignIn", timedHandler(tokenSignIn, 2)).Methods("POST")
+	authRouter.Handle("/tokenSignOut", timedHandler(tokenSignOut, 2)).Methods("GET")
+
+	////main.HandleFunc("/birdUp", updateBirdHandler).Methods("POST")
+
+	// * Catch-all: Serve our JavaScript application's entry-point (index.html).
 	main.PathPrefix("/").HandlerFunc(indexHandler(entry))
 
-	amw := authenticationMiddleware{}
-	main.Use(amw.AuthMiddleware)
-
 	// Load our endpoints
-	// sampleEndpoint.Load(routerV1, mysqlDB)
+	//// sampleEndpoint.Load(routerV1, mysqlDB)
 	MPLEndpoint.Load(routerV1, mysqlDB)
 	TeslaEndpoint.Load(routerV1, mysqlDB)
 	DataValidationEndpoint.Load(routerV1, mysqlDB)
@@ -155,7 +153,7 @@ func main() {
 		TLSConfig:    cfg,
 		TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler), 0),
 	}
-	// // Prevents memory leak
+	// Prevents memory leak
 	server.SetKeepAlivesEnabled(false)
 
 	log.Info("The server is starting, and it will be listening on port " + port)

@@ -12,6 +12,7 @@
   <form>
     <input type="button" value="Sign out" onclick="signOut()">
   </form>
+  Reload the page when signed in
   <script>
     function onSignIn(googleUser) {
       // Useful data for your client-side scripts:
@@ -27,18 +28,17 @@
       var id_token = googleUser.getAuthResponse().id_token;
      // console.log("ID Token: " + id_token);
 
-      fetch('https://industrialplankton.ca/tokenSignIn', {
+      fetch('https://industrialplankton.ca/auth/tokenSignIn', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({id_token: id_token})
       })
-
      // console.log("Script Done");
     }
     function signOut() {
-      fetch('https://industrialplankton.ca/tokenSignOut', {
+      fetch('https://industrialplankton.ca/auth/tokenSignOut', {
         method: 'GET'
       })
 
