@@ -20,6 +20,8 @@ import (
 
 //so the package is used no mater what
 var _ = verify.Certs{}
+
+// Initialize the Session Store
 var store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))
 
 type table struct {
@@ -29,6 +31,48 @@ type table struct {
 
 type auth struct {
 	Idtoken string `json:"id_token"`
+}
+
+type keywords struct {
+	Keys string `json:"keys"`
+}
+
+func keyWordSearch(w http.ResponseWriter, r *http.Request) {
+	var toSearch keywords
+	var keysSlice []string
+
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields()
+	err := dec.Decode(&toSearch)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	keysSlice = append(keysSlice, toSearch.Keys)
+	for len(keysSlice) < 2 { //append the empty keywords
+		keysSlice = append(keysSlice, "")
+	}
+	keysSlice = []string{keysSlice[0], keysSlice[0], keysSlice[1], keysSlice[1]} //duplicate entries for multicolumn search
+	keysSlice = utility.AddWildCards(keysSlice)
+
+	keycolumns := []string{"technical_desc", "customer_desc", "name", "part_number"}
+	combiners := []string{"", " OR ", ") AND (", " OR "}
+	SearchResult, err := IPDatabase.MultiLIKE(mysqlDB, "keywordsearch", keysSlice, keycolumns, combiners)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	prejsonObj := table{Headers: nil, Data: SearchResult}
+
+	jsonObj, err := json.Marshal(prejsonObj)
+	if err != nil {
+		fmt.Println(fmt.Errorf("Error: %v", err))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.Write(jsonObj)
 }
 
 func getMPLHandler(w http.ResponseWriter, r *http.Request) {
@@ -101,7 +145,6 @@ func tokenSignIn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	v := verify.Verifier{}
-	// aud := "1095332051856-mgt08ppg80t5je1co4h388kujqu43ia8.apps.googleusercontent.com"
 	err = v.VerifyIDToken(token.Idtoken, []string{
 		aud,
 	})
@@ -129,12 +172,8 @@ func tokenSignIn(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	// fmt.Println(session.Values[42])
-	// fmt.Println(session.Values[claimSet])
-
-	// Set some session values.
+	// Set as Authorized
 	session.Values["Auth"] = true
-	// session.Values[42] = 43
 
 	// Save it before we write to the response/return from the handler.
 	err = session.Save(r, w)
@@ -143,15 +182,11 @@ func tokenSignIn(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	fmt.Println(session)
-
-	addCookie(w, "sessionName", claimSet.Sub)
-	fmt.Println(w)
 	w.WriteHeader(http.StatusOK)
 }
 
 func tokenSignOut(w http.ResponseWriter, r *http.Request) {
-	//Sub, err := r.Cookie("sessionName")
+	// find the cookie that is just a number as it is the session cookie
 	cookies := r.Cookies()
 	var auth *http.Cookie
 	for _, e := range cookies {
@@ -166,43 +201,45 @@ func tokenSignOut(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Your already logged out", http.StatusInternalServerError)
 		return
 	}
+
+	// Get session
 	session, err := store.Get(r, auth.Name)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	// fmt.Println(session.Values[42])
-	// fmt.Println(session.Values[claimSet])
 
-	// Set some session values.
+	// Reset some authorization.
 	session.Values["Auth"] = false
-	// session.Values[42] = 43
 	session.Options.MaxAge = -1
+
 	// Save it before we write to the response/return from the handler.
 	err = session.Save(r, w)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	// addCookie(w, "sessionName", "")
+	//// addCookie(w, "sessionName", "")
 }
 
-func addCookie(w http.ResponseWriter, name string, value string) {
-	expire := time.Now().AddDate(0, 0, 1)
-	cookie := &http.Cookie{
-		Name:    name,
-		Value:   value,
-		Expires: expire,
-	}
-	http.SetCookie(w, cookie)
-}
+// /**/
+// // func addCookie(w http.ResponseWriter, name string, value string) {
+// // 	expire := time.Now().AddDate(0, 0, 1)
+// // 	cookie := &http.Cookie{
+// // 		Name:    name,
+// // 		Value:   value,
+// // 		Expires: expire,
+// // 	}
+// // 	http.SetCookie(w, cookie)
+// // }
 
 //AuthMiddleware checks for current session
 func AuthMiddleware(next http.Handler) http.Handler {
 	utility.TimeTrack(time.Now(), "Auth Midware")
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
-		//token, err := r.Cookie("sessionName")
+
+		// find the cookie that is just a number as it is the session cookie
 		cookies := r.Cookies()
 		var auth *http.Cookie
 		for _, e := range cookies {
@@ -214,33 +251,22 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			break
 		}
 
+		//Check Authorization
 		if auth != nil {
-			fmt.Println("token.Value:")
-			fmt.Println(auth.Value)
-
 			session, _ := store.Get(r, auth.Name)
-			if session.Values["Auth"] == true {
 
-				// _, err := r.Cookie(auth.Value)
-				//	if err == nil {
-				//// We found the token in our map
-				//// log.Printf("Authenticated user %s\n", user)
+			if session.Values["Auth"] == true {
 				// Pass down the request to the next middleware (or final handler)
-				fmt.Println("Authorized")
+				fmt.Println(r.RemoteAddr + " Authorized for " + r.RequestURI)
 				next.ServeHTTP(w, r)
 			} else {
-				fmt.Println("Not Authorized: ")
-				fmt.Println(r)
+				fmt.Println(r.RemoteAddr + " Not Authorized for" + r.RequestURI)
 				http.Redirect(w, r, "https://industrialplankton.ca"+signIn, http.StatusForbidden)
-				// http.ServeFile(w, r, static+entry)
 			}
 		} else {
 			//Serve the signIn page
-			fmt.Println("Not Authorized: ")
-			fmt.Println(r)
-			// http.ServeFile(w, r, static+entry)
+			fmt.Println(r.RemoteAddr + " Not Authorized for" + r.RequestURI)
 			http.Redirect(w, r, "https://industrialplankton.ca"+signIn, http.StatusForbidden)
-			//// http.Error(w, "Forbidden", http.StatusForbidden)
 		}
 	})
 }

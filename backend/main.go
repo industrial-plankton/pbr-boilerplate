@@ -3,7 +3,6 @@ package main
 import (
 	"backend/postgres"
 	"crypto/tls"
-	"fmt"
 	"net/http"
 	"os"
 	"time"
@@ -42,22 +41,18 @@ const (
 
 func init() {
 	envconfig.MustProcess("pbr", &env)
-	fmt.Println(os.Getenv("SESSION_KEY"))
-	if os.Getenv("SESSION_KEY") == "" {
-		os.Setenv("SESSION_KEY", string(securecookie.GenerateRandomKey(32)))
-	}
-	fmt.Println(os.Getenv("SESSION_KEY"))
-	// store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))
+	os.Setenv("SESSION_KEY", string(securecookie.GenerateRandomKey(32)))
+	// fmt.Println(os.Getenv("SESSION_KEY"))
 }
 func redirectTLS(w http.ResponseWriter, r *http.Request) {
-	utility.TimeTrack(time.Now(), "http redirect")
+	utility.TimeTrack(time.Now(), "Redirected to .com")
 	http.Redirect(w, r, "https://industrialplankton.com"+r.RequestURI, http.StatusMovedPermanently)
 }
 
 func indexHandler(entrypoint string) func(w http.ResponseWriter, r *http.Request) {
-	utility.TimeTrack(time.Now(), "Catch all handle")
+	utility.TimeTrack(time.Now(), "indexHandled: "+entrypoint)
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "https://industrialplankton.ca"+signIn, http.StatusNotFound)
+		http.Redirect(w, r, "https://industrialplankton.ca"+entrypoint, http.StatusNotFound)
 	}
 	return http.HandlerFunc(fn)
 }
@@ -81,7 +76,7 @@ func main() {
 	routerAPI := main.PathPrefix(apiSubrouterPath).Subrouter()
 	routerV1 := routerAPI.PathPrefix("/v1").Subrouter()
 	authRouter := main.Host("industrialplankton.ca").PathPrefix("/auth").Subrouter()
-	Protected := main.Host("industrialplankton.ca").PathPrefix("/prot").Subrouter()
+	Protected := main.Host("industrialplankton.ca").PathPrefix("/Protected").Subrouter()
 	Protected.Use(AuthMiddleware)
 	ProtectedAPI := Protected.PathPrefix(apiSubrouterPath).PathPrefix("/v1").Subrouter()
 	//catchAll := main.PathPrefix("/").Subrouter()
@@ -89,11 +84,6 @@ func main() {
 	//Serve flavor icon
 	main.HandleFunc("/favicon.ico", faviconHandler)
 
-	//IndustrialPlankton.com redirect
-	main.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println(".com redirect")
-		redirectTLS(w, r)
-	})
 	//Website Test Page, Nonessential
 	main.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
@@ -101,29 +91,20 @@ func main() {
 	})
 	main.Handle("/signIn/", http.TimeoutHandler(http.Handler(http.FileServer(http.Dir(static))), 2*time.Second, "Timeout!\n"))
 
-	// //staticFileDirectory := http.Dir(static)
-	// Declare the handler, that routes requests to their respective filename.
-	// The fileserver is wrapped in the `stripPrefix` method, because we want to
-	// remove the "/assets/" prefix when looking for files.
-	// For example, if we type "/assets/index.html" in our browser, the file server
-	// will look for only "index.html" inside the directory declared above.
-	// If we did not strip the prefix, the file server would look for "./assets/assets/index.html", and yield an error
-	// staticFileHandler := http.StripPrefix("/assets/")
-	// The "PathPrefix" method acts as a matcher, and matches all routes starting
-	// with "/assets/", instead of the absolute route itself
-
-	//	// Protected.HandleFunc("/assets/", func(w http.ResponseWriter, r *http.Request) {
-	//	// 	(http.ServeFile(w, r, static+r.RequestURI))
-	//	// })
 	Protected.Handle("/assets/", http.TimeoutHandler(http.Handler(http.FileServer(http.Dir(static))), 2*time.Second, "Timeout!\n"))
+	Protected.Handle("/MPL/", http.TimeoutHandler(http.Handler(http.FileServer(http.Dir(static))), 2*time.Second, "Timeout!\n"))
+	Protected.Handle("/KeywordSearch/", http.TimeoutHandler(http.Handler(http.FileServer(http.Dir(static))), 2*time.Second, "Timeout!\n"))
+	Protected.Handle("/PartEdit/", http.TimeoutHandler(http.Handler(http.FileServer(http.Dir(static))), 2*time.Second, "Timeout!\n"))
+	Protected.Handle("/TagLookup/", http.TimeoutHandler(http.Handler(http.FileServer(http.Dir(static))), 2*time.Second, "Timeout!\n"))
+	//Catch all: Redirect to signIn/Portal page
+	Protected.PathPrefix("/").HandlerFunc(indexHandler(signIn))
 	ProtectedAPI.Handle("/MPL", timedHandler(getMPLHandler, 5)).Methods("GET")
+	ProtectedAPI.Handle("/keyWordSearch", timedHandler(keyWordSearch, 5)).Methods("POST")
 	authRouter.Handle("/tokenSignIn", timedHandler(tokenSignIn, 2)).Methods("POST")
 	authRouter.Handle("/tokenSignOut", timedHandler(tokenSignOut, 2)).Methods("GET")
 
-	////main.HandleFunc("/birdUp", updateBirdHandler).Methods("POST")
-
-	// * Catch-all: Serve our JavaScript application's entry-point (index.html).
-	main.PathPrefix("/").HandlerFunc(indexHandler(entry))
+	// * Catch-all: Redirect all other traffic to .com
+	main.PathPrefix("/").HandlerFunc(redirectTLS)
 
 	// Load our endpoints
 	//// sampleEndpoint.Load(routerV1, mysqlDB)

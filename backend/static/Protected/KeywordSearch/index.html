@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <script src="https://bossanova.uk/jexcel/v3/jexcel.js"></script>
+<script src="https://bossanova.uk/jsuites/v2/jsuites.js"></script>
+<link rel="stylesheet" href="https://bossanova.uk/jexcel/v3/jexcel.css" type="text/css" />
+<link rel="stylesheet" href="https://bossanova.uk/jsuites/v2/jsuites.css" type="text/css" />
+
+<link rel="stylesheet" href="https://bossanova.uk/jexcel/v3/jexcel.datatables.css" type="text/css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jexcel/2.1.0/js/jquery.jexcel.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jexcel/2.1.0/js/jquery.jdropdown.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jexcel/2.1.0/js/jquery.jcalendar.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jexcel/2.1.0/css/jquery.jexcel.min.css"
+  type="text/css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jexcel/2.1.0/css/jquery.jdropdown.min.css"
+  type="text/css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jexcel/2.1.0/css/jquery.jcalendar.min.css"
+  type="text/css" />
+
+<head>
+  <title>Keyword Search</title>
+</head>
+
+<body>
+  <h1>Keyword Search</h1>
+
+ 
+  Search Descriptions by keywords:
+  <input type="text" id="keys" name="Keys">
+  <button type="button" id="Submit">Search</button> 
+  <br />
+  <br />
+  <div id="spreadsheet"></div>
+
+  <script>
+    var table1
+    //get the full MPL
+    fetch("/Protected/api/v1/MPL")
+    .then((response) => {
+      return response.json();
+    })
+    .then((myJson) => {
+      table1 = jexcel(document.getElementById('spreadsheet'), {
+        data: myJson.data,
+        colHeaders: myJson.headers,
+        search: true,
+        pagination: 10,
+        minDimensions: [10, 20],
+        defaultColWidth: 100,
+        tableOverflow: false
+      });
+    });
+
+//Get the filtered MPL
+document.getElementById("keys").onchange= ()=>{
+  console.log("getElementById")
+  var text = document.getElementById("keys").value
+  console.log(text)
+  fetch("/Protected/api/v1/keyWordSearch",{
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({keys: text})
+      })
+      .then((response) => {
+        return response.json();
+      })
+      .then((myJson) => {
+        table1.setData(myJson.data)
+      });
+}
+
+  </script>
+</body>
+
+
+</html>
