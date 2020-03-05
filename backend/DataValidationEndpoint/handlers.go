@@ -8,6 +8,7 @@ import (
 	"net/http"
 )
 
+//RefreshHandler refreshes the MPL on googel sheets
 func RefreshHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("Running get Ship!")
 	_, err := Refresh(r.Header)

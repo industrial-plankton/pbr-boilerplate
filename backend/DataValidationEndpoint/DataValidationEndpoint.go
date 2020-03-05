@@ -3,7 +3,7 @@ package DataValidationEndpoint
 import (
 	// "errors"
 	"backend/IPDatabase"
-	"backend/IPsheets"
+	IPSheets "backend/IPSheets"
 	"backend/utility"
 
 	// "fmt"
@@ -15,6 +15,7 @@ type sampleRequest struct {
 	ID int `json:"ID"`
 }
 
+//Refresh the datavalidation data on google sheets
 func Refresh(header http.Header) (interface{}, error) {
 	defer utility.TimeTrack(time.Now(), "Load Ship")
 	// var data [][][]interface{}
