@@ -59,11 +59,15 @@ func indexHandler(entrypoint string) func(w http.ResponseWriter, r *http.Request
 
 func faviconHandler(w http.ResponseWriter, r *http.Request) {
 	utility.TimeTrack(time.Now(), "Serve Icon")
-	http.ServeFile(w, r, static+"favicon.ico")
+	http.ServeFile(w, r, static+"/favicon.ico")
 }
 
 func timedHandler(Handler http.HandlerFunc, timeOut int) http.Handler {
 	return http.TimeoutHandler(http.HandlerFunc(Handler), time.Duration(timeOut)*time.Second, "Timeout!\n")
+}
+
+func staticHandler() http.Handler {
+	return http.TimeoutHandler(http.Handler(http.FileServer(http.Dir(static))), 2*time.Second, "Timeout!\n")
 }
 
 func main() {
@@ -91,11 +95,11 @@ func main() {
 	})
 	main.Handle("/signIn/", http.TimeoutHandler(http.Handler(http.FileServer(http.Dir(static))), 2*time.Second, "Timeout!\n"))
 
-	Protected.Handle("/assets/", http.TimeoutHandler(http.Handler(http.FileServer(http.Dir(static))), 2*time.Second, "Timeout!\n"))
-	Protected.Handle("/MPL/", http.TimeoutHandler(http.Handler(http.FileServer(http.Dir(static))), 2*time.Second, "Timeout!\n"))
-	Protected.Handle("/KeywordSearch/", http.TimeoutHandler(http.Handler(http.FileServer(http.Dir(static))), 2*time.Second, "Timeout!\n"))
-	Protected.Handle("/PartEdit/", http.TimeoutHandler(http.Handler(http.FileServer(http.Dir(static))), 2*time.Second, "Timeout!\n"))
-	Protected.Handle("/TagLookup/", http.TimeoutHandler(http.Handler(http.FileServer(http.Dir(static))), 2*time.Second, "Timeout!\n"))
+	Protected.Handle("/assets/", staticHandler())
+	Protected.Handle("/MPL/", staticHandler())
+	Protected.Handle("/KeywordSearch/", staticHandler())
+	Protected.Handle("/PartEdit/", staticHandler())
+	Protected.Handle("/TagLookup/", staticHandler())
 	//Catch all: Redirect to signIn/Portal page
 	Protected.PathPrefix("/").HandlerFunc(indexHandler(signIn))
 	ProtectedAPI.Handle("/MPL", timedHandler(getMPLHandler, 5)).Methods("GET")

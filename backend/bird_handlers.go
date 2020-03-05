@@ -34,7 +34,8 @@ type auth struct {
 }
 
 type keywords struct {
-	Keys string `json:"keys"`
+	Descriptions string `json:"Descriptions"`
+	Suppliers    string `json:"Suppliers"`
 }
 
 func keyWordSearch(w http.ResponseWriter, r *http.Request) {
@@ -49,12 +50,13 @@ func keyWordSearch(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	keysSlice = append(keysSlice, toSearch.Keys)
+	keysSlice = append(keysSlice, toSearch.Descriptions, toSearch.Suppliers)
 	for len(keysSlice) < 2 { //append the empty keywords
 		keysSlice = append(keysSlice, "")
 	}
-	keysSlice = []string{keysSlice[0], keysSlice[0], keysSlice[1], keysSlice[1]} //duplicate entries for multicolumn search
+
 	keysSlice = utility.AddWildCards(keysSlice)
+	keysSlice = []string{keysSlice[0], keysSlice[0], keysSlice[1], keysSlice[1]} //duplicate entries for multicolumn search
 
 	keycolumns := []string{"technical_desc", "customer_desc", "name", "part_number"}
 	combiners := []string{"", " OR ", ") AND (", " OR "}
@@ -63,9 +65,18 @@ func keyWordSearch(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	SearchResult = utility.PopColumn(SearchResult, 0)
 
+	//Parse No result
+	if len(SearchResult) == 0 {
+		var empty []interface{}
+		SearchResult = append(SearchResult, empty)
+	}
+	if len(SearchResult[0]) == 0 {
+		SearchResult[0] = append(SearchResult[0], "No Match")
+	}
+	//Pack JSON
 	prejsonObj := table{Headers: nil, Data: SearchResult}
-
 	jsonObj, err := json.Marshal(prejsonObj)
 	if err != nil {
 		fmt.Println(fmt.Errorf("Error: %v", err))

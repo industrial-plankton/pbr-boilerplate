@@ -161,7 +161,7 @@ func ConcatSplitData(data [][][]interface{}) [][]interface{} {
 
 	for i := 1; i < len(data); i++ { //loop through remaining ranges
 		for r := range data[i] { //loop through each row
-			if len(data[i]) > len(CombinedData) { //append a row of nulls if CombinedData doesnt have another row
+			if len(data[i]) > len(CombinedData) { //append a row of nulls if CombinedData doesn't have another row
 				nullrow := make([]interface{}, len(CombinedData[0]))
 				CombinedData = append(CombinedData, nullrow)
 			}
@@ -169,4 +169,32 @@ func ConcatSplitData(data [][][]interface{}) [][]interface{} {
 		}
 	}
 	return CombinedData
+}
+
+//PopColumn Removes the specified column from the table data
+func PopColumn(table [][]interface{}, column int) [][]interface{} {
+	//Nil checks
+	if len(table) > 0 {
+		if len(table[0]) > 0 {
+			var newTable [][]interface{}
+			//Check column is in range
+			if column >= len(table[0]) {
+				fmt.Println("column out of bounds")
+				return table
+			}
+			for _, e := range table {
+				var newColumn []interface{}
+				if column == 0 {
+					newColumn = e[1:]
+				} else if column == len(table[0])-1 {
+					newColumn = e[:column-1]
+				} else {
+					newColumn = append(e[:column], e[column+1:])
+				}
+				newTable = append(newTable, newColumn)
+			}
+			return newTable
+		}
+	}
+	return table
 }

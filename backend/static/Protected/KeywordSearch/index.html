@@ -27,11 +27,15 @@
 
  
   Search Descriptions by keywords:
-  <input type="text" id="keys" name="Keys">
-  <button type="button" id="Submit">Search</button> 
+  <input type="text"  id="Descriptions">
   <br />
+
+  Search Suppliers by keywords:
+  <input type="text" id="Suppliers">
   <br />
+
   <div id="spreadsheet"></div>
+  
 
   <script>
     var table1
@@ -45,7 +49,7 @@
         data: myJson.data,
         colHeaders: myJson.headers,
         search: true,
-        pagination: 10,
+        pagination: 25,
         minDimensions: [10, 20],
         defaultColWidth: 100,
         tableOverflow: false
@@ -53,16 +57,21 @@
     });
 
 //Get the filtered MPL
-document.getElementById("keys").onchange= ()=>{
-  console.log("getElementById")
-  var text = document.getElementById("keys").value
-  console.log(text)
+document.getElementById("Descriptions").oninput = () => searchDB()
+document.getElementById("Suppliers").oninput = () => searchDB()
+
+function searchDB(){
+  var Descriptions = document.getElementById("Descriptions").value
+  var Suppliers = document.getElementById("Suppliers").value
   fetch("/Protected/api/v1/keyWordSearch",{
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({keys: text})
+        body: JSON.stringify({
+          Descriptions: Descriptions,
+          Suppliers: Suppliers
+        })
       })
       .then((response) => {
         return response.json();
@@ -70,7 +79,8 @@ document.getElementById("keys").onchange= ()=>{
       .then((myJson) => {
         table1.setData(myJson.data)
       });
-}
+};
+
 
   </script>
 </body>
