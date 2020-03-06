@@ -33,33 +33,43 @@
   Search Suppliers by keywords:
   <input type="text" id="Suppliers">
   <br />
-
+ 
   <div id="spreadsheet"></div>
-  
 
   <script>
     var table1
     //get the full MPL
-    fetch("/Protected/api/v1/MPL")
+    fetch("/Protected/api/v1/keyWordSearch",{
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          Descriptions: "",
+          Suppliers: ""
+        })
+      })
     .then((response) => {
       return response.json();
     })
     .then((myJson) => {
+      console.log(myJson.headers.length);
       table1 = jexcel(document.getElementById('spreadsheet'), {
         data: myJson.data,
         colHeaders: myJson.headers,
         search: true,
         pagination: 25,
-        minDimensions: [10, 20],
-        defaultColWidth: 100,
-        tableOverflow: false
+        tableOverflow: false,
+        columnResize: true,
+        rowResize: true,
+        wordWrap: true
       });
     });
 
-//Get the filtered MPL
+//set handlers
 document.getElementById("Descriptions").oninput = () => searchDB()
 document.getElementById("Suppliers").oninput = () => searchDB()
-
+//Get the filtered MPL
 function searchDB(){
   var Descriptions = document.getElementById("Descriptions").value
   var Suppliers = document.getElementById("Suppliers").value

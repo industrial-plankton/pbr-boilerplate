@@ -65,7 +65,12 @@ func keyWordSearch(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	SearchResult = utility.PopColumn(SearchResult, 0)
+	Headers := IPDatabase.GetHeadersPrepared(mysqlDB, "keywordsearch")
+	for i, e := range Headers {
+		Headers[i] = IPDatabase.Convert(mysqlDB, "column_map", fmt.Sprint(e), "", endcolumn)
+	}
+	fmt.Println(len(Headers))
+	//	//SearchResult = utility.PopColumn(SearchResult, 0)
 
 	//Parse No result
 	if len(SearchResult) == 0 {
@@ -75,8 +80,9 @@ func keyWordSearch(w http.ResponseWriter, r *http.Request) {
 	if len(SearchResult[0]) == 0 {
 		SearchResult[0] = append(SearchResult[0], "No Match")
 	}
+
 	//Pack JSON
-	prejsonObj := table{Headers: nil, Data: SearchResult}
+	prejsonObj := table{Headers: Headers, Data: SearchResult}
 	jsonObj, err := json.Marshal(prejsonObj)
 	if err != nil {
 		fmt.Println(fmt.Errorf("Error: %v", err))
@@ -89,8 +95,9 @@ func keyWordSearch(w http.ResponseWriter, r *http.Request) {
 func getMPLHandler(w http.ResponseWriter, r *http.Request) {
 	utility.TimeTrack(time.Now(), "getMPL")
 	w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
-	// fmt.Println(r)
 
+	Headers := IPDatabase.GetHeadersPrepared(mysqlDB, "mpltext")
+	fmt.Println(Headers)
 	View := IPDatabase.GetView(mysqlDB, "masterpartslist")
 	// View := IPDatabase.GetView(mysqlDB, "column_map")
 

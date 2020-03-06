@@ -11,6 +11,7 @@ import (
 )
 
 //GetHeaders returns just the headers of the table in a row
+//! Depreciated - use GetHeadersPrepared() to avoid SQL injections
 func GetHeaders(mysqlDB *sqlx.DB, table string) []interface{} {
 	// defer timeTrack(time.Now(), "Get Headers of "+table)
 	// fetch all places from the db
@@ -26,6 +27,35 @@ func GetHeaders(mysqlDB *sqlx.DB, table string) []interface{} {
 		rowdata, _ := rows.SliceScan()
 		headers = append(headers, rowdata[3]) //column names are stored in column 4 of information_schema.columns
 	}
+	return headers
+}
+
+//GetHeadersPrepared returns just the headers of the table in a row and uses a prepared statement
+func GetHeadersPrepared(mysqlDB *sqlx.DB, table string) []interface{} {
+	// defer timeTrack(time.Now(), "Get Headers of "+table)
+	// fetch all places from the db
+	var headers []interface{}
+	type argsList struct {
+		Table string
+	}
+	args := argsList{Table: table}
+	SQL := "SELECT * FROM information_schema.columns WHERE table_schema = 'public' AND table_name=:table;"
+	stmt, err := mysqlDB.PrepareNamed(SQL)
+	if err != nil {
+		utility.Log(err)
+		return headers
+	}
+	rows, err := stmt.Queryx(args)
+	if err != nil {
+		utility.Log(err)
+		return headers
+	}
+	// iterate over each row
+	for rows.Next() {
+		rowdata, _ := rows.SliceScan()
+		headers = append(headers, rowdata[3]) //column names are stored in column 4 of information_schema.columns
+	}
+	fmt.Println(len(headers))
 	return headers
 }
 
@@ -54,6 +84,24 @@ func Filter(mysqlDB *sqlx.DB, table, key, keyColumn string) ([][]interface{}, er
 	// defer timeTrack(time.Now(), "Search for "+key)
 	SQL := "SELECT " + keyColumn + " FROM " + table + " t WHERE t." + keyColumn + " ~* '" + key + "' ORDER BY " + keyColumn
 	values, err := standardQuery(mysqlDB, SQL)
+	if err != nil {
+		return values, err
+	}
+	return values, nil
+}
+
+type argsFilter struct {
+	Table     string
+	Key       string
+	KeyColumn string
+}
+
+//FilterPrepared returns the keyColumn filtered by the key
+func FilterPrepared(mysqlDB *sqlx.DB, table, key, keyColumn string) ([][]interface{}, error) {
+	// defer timeTrack(time.Now(), "Search for "+key)
+	args := argsFilter{Table: table, Key: key, KeyColumn: keyColumn}
+	SQL := "SELECT :keyColumn FROM :table t WHERE t.:keyColumn ~* :key ORDER BY :keyColumn"
+	values, err := standardQueryPrepared(mysqlDB, SQL, args)
 	if err != nil {
 		return values, err
 	}
@@ -232,12 +280,36 @@ func standardQuery(mysqlDB *sqlx.DB, SQL string) ([][]interface{}, error) {
 	return values, nil
 }
 
+//StandardQueryPrepared executes SQL string as a query and returns the data
+func standardQueryPrepared(mysqlDB *sqlx.DB, SQL string, args interface{}) ([][]interface{}, error) {
+	var values [][]interface{}
+
+	stmt, err := mysqlDB.PrepareNamed(SQL)
+	if err != nil {
+		utility.Log(SQL + " Failed")
+		utility.Log(err)
+		return values, err
+	}
+	rows, err := stmt.Queryx(args)
+	if err != nil {
+		utility.Log(SQL + " Failed")
+		utility.Log(err)
+		return values, err
+	}
+
+	for rows.Next() {
+		rowdata, _ := rows.SliceScan()
+		values = append(values, rowdata)
+	}
+	return values, nil
+}
+
 //HeaderQuery executes SQL string as a query and returns the data but with the table headers as the first row
 //must be selecting all columns, in normal order
 func headerQuery(mysqlDB *sqlx.DB, SQL, table string) ([][]interface{}, error) {
 	var values [][]interface{}
 
-	values = append(values, GetHeaders(mysqlDB, table))
+	values = append(values, GetHeadersPrepared(mysqlDB, table))
 	rows, err := mysqlDB.Queryx(SQL)
 	if err != nil {
 		utility.Log(SQL + " Failed")
