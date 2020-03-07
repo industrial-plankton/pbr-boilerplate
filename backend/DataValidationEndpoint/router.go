@@ -8,7 +8,8 @@ import (
 )
 
 var (
-	db    *sqlx.DB
+	db *sqlx.DB
+	//IDMap map of user emails to their personal sheet ID
 	IDMap map[string]string
 )
 

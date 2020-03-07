@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+  <script src="https://bossanova.uk/jexcel/v3/jexcel.js"></script>
+<script src="https://bossanova.uk/jsuites/v2/jsuites.js"></script>
+<link rel="stylesheet" href="https://bossanova.uk/jexcel/v3/jexcel.css" type="text/css" />
+<link rel="stylesheet" href="https://bossanova.uk/jsuites/v2/jsuites.css" type="text/css" />
+
+<!-- <link rel="stylesheet" href="https://bossanova.uk/jexcel/v3/jexcel.datatables.css" type="text/css" /> -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jexcel/2.1.0/js/jquery.jexcel.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jexcel/2.1.0/js/jquery.jdropdown.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jexcel/2.1.0/js/jquery.jcalendar.js"></script>
+<!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jexcel/2.1.0/css/jquery.jexcel.min.css" -->
+  <!-- type="text/css" /> -->
+<!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jexcel/2.1.0/css/jquery.jdropdown.min.css" -->
+  <!-- type="text/css" /> -->
+<!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jexcel/2.1.0/css/jquery.jcalendar.min.css"
+  type="text/css" /> -->
+
+<head>
+  <title>Keyword Search</title>
+</head>
+
+<body>
+  <h1>Keyword Search</h1>
+
+ 
+  Search Descriptions by keywords:
+  <input type="text"  id="Descriptions">
+  <br />
+
+  Search Suppliers by keywords:
+  <input type="text" id="Suppliers">
+  <br />
+ 
+  <div id="spreadsheet"></div>
+
+  <script>
+    var table1
+    //get the full MPL
+    fetch("/Protected/api/v1/keyWordSearch",{
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          Descriptions: "",
+          Suppliers: ""
+        })
+      })
+    .then((response) => {
+      return response.json();
+    })
+    .then((myJson) => {
+      console.log(myJson.headers.length);
+      table1 = jexcel(document.getElementById('spreadsheet'), {
+        data: myJson.data,
+        colHeaders: myJson.headers,
+        search: true,
+        pagination: 25,
+        tableOverflow: false,
+        columnResize: true,
+        rowResize: true,
+        wordWrap: true
+      });
+    });
+
+//set handlers
+document.getElementById("Descriptions").oninput = () => searchDB()
+document.getElementById("Suppliers").oninput = () => searchDB()
+//Get the filtered MPL
+function searchDB(){
+  var Descriptions = document.getElementById("Descriptions").value
+  var Suppliers = document.getElementById("Suppliers").value
+  fetch("/Protected/api/v1/keyWordSearch",{
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          Descriptions: Descriptions,
+          Suppliers: Suppliers
+        })
+      })
+      .then((response) => {
+        return response.json();
+      })
+      .then((myJson) => {
+        table1.setData(myJson.data)
+      });
+};
+
+
+  </script>
+</body>
+
+
+</html>

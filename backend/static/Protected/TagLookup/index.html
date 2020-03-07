@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jexcel/2.1.0/js/jquery.jexcel.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jexcel/2.1.0/js/jquery.jdropdown.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jexcel/2.1.0/js/jquery.jcalendar.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jexcel/2.1.0/css/jquery.jexcel.min.css"
+  type="text/css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jexcel/2.1.0/css/jquery.jdropdown.min.css"
+  type="text/css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jexcel/2.1.0/css/jquery.jcalendar.min.css"
+  type="text/css" />
+
+<head>
+  <title>Tag Lookup</title>
+</head>
+
+<body>
+  <h1>Tag Lookup</h1>
+
+  <!--
+    This section contains the form, that will be used to hit the
+    `POST /bird` API that we will build in the next section
+   -->
+  <form action="/bird" method="post">
+    Species:
+    <input type="text" name="species">
+    <br /> Description:
+    <input type="text" name="description">
+    <br />
+    <input type="submit" value="Submit">
+  </form>
+
+  <form action="/birdup" method="post">
+    Species to update:
+    <input type="text" name="species">
+    <br /> New description:
+    <input type="text" name="new description">
+    <br />
+    <input type="submit" value="Submit">
+  </form>
+  <!--
+    Finally, the last section is the script that will
+    run on each page load to fetch the list of birds
+    and add them to our existing table
+   -->
+
+  <div id="my"></div>
+
+  <script>
+
+    fetch("/prot/api/v1/MPL")
+      .then((response) => {
+        return response.json();
+      })
+      .then((myJson) => {
+
+        $('#my').jexcel({
+          data: myJson.data,
+          search: true,
+          pagination: 3,
+          columnSorting: true,
+          colHeaders: myJson.headers,
+          colWidths: [300, 300],
+          columns: [
+            { type: 'text' },
+            { type: 'text' },
+          ]
+        });
+      });
+  </script>
+</body>
+
+
+</html>

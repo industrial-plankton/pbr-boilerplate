@@ -3,7 +3,7 @@ package TeslaEndpoint
 import (
 	// "errors"
 	"backend/IPDatabase"
-	"backend/IPsheets"
+	"backend/IPSheets"
 	"backend/utility"
 	"fmt"
 	"net/http"
