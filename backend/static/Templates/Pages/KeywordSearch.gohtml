@@ -1,3 +1,4 @@
+{{define "/Protected/KeywordSearch/"}}
 <!DOCTYPE html>
 <html lang="en">
   <script src="https://bossanova.uk/jexcel/v3/jexcel.js"></script>
@@ -23,6 +24,7 @@
 </head>
 
 <body>
+{{template "header" .}}
   <h1>Keyword Search</h1>
 
  
@@ -93,7 +95,8 @@ function searchDB(){
 
 
   </script>
+  {{template "footer" .}}
 </body>
 
-
 </html>
+{{end}}

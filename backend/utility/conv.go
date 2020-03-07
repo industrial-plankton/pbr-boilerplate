@@ -26,6 +26,42 @@ func AddWildCards(array []string) []string {
 	return array
 }
 
+//SanatizeSQLVariables adds regular expresstion wildcars to begining and end of each word
+func SanitizeSQLVariables(array []string) []string {
+	for i, e := range array {
+		array[i] = SanitizeSQLVariable(e)
+	}
+	return array
+}
+
+//SanatizeSQLVariables removes all " and ' from Variable
+func SanitizeSQLVariable(Variable string) string {
+	Variable = strings.ReplaceAll(Variable, "'", "''")
+	Variable = strings.ReplaceAll(Variable, `"`, `""`)
+	return Variable
+}
+
+//todo make function to turn array into (0)(1)(2) for and conditions or (0)|(1)|(2) for or
+func RegxAndString(variables []string) string {
+	var buffer strings.Builder
+	for _, e := range variables {
+		buffer.WriteString("(%")
+		buffer.WriteString(e)
+		buffer.WriteString("%)")
+	}
+	return buffer.String()
+}
+
+func RegxOrString(variables []string) string {
+	var buffer strings.Builder
+	for _, e := range variables {
+		buffer.WriteString("(%")
+		buffer.WriteString(e)
+		buffer.WriteString("%)|")
+	}
+	return strings.Trim(buffer.String(), "|")
+}
+
 //RearrangeHeaders rearanges and converts Header slice into database header sclice
 func RearrangeHeaders(headerMap *bimap.BiMap, sheetsHeaders []interface{}) []interface{} {
 	defer TimeTrack(time.Now(), "rearrange: ")

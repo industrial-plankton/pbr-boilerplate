@@ -1,0 +1,59 @@
+{{define "/Protected/assets/"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Assets Test Page</title>
+  <meta name="description" content="This the Description">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jexcel/2.1.0/js/jquery.jexcel.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jexcel/2.1.0/js/jquery.jdropdown.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jexcel/2.1.0/js/jquery.jcalendar.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jexcel/2.1.0/css/jquery.jexcel.min.css"
+    type="text/css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jexcel/2.1.0/css/jquery.jdropdown.min.css"
+    type="text/css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jexcel/2.1.0/css/jquery.jcalendar.min.css"
+    type="text/css" />
+</head>
+
+<body>
+{{template "header" .}}
+<br /> 
+  <h1>Assets Testing Page</h1>
+  <a href="/Protected/MPL/">MPL</a><br /> 
+  <br /> 
+  <div id="my"></div>
+
+  <script>
+    // Go fet the data from the server and build the table
+
+    fetch("/Protected/api/v1/MPL")
+      .then((response) => {
+        return response.json();
+      })
+      .then((myJson) => {
+
+        $('#my').jexcel({
+          data: myJson.data,
+          search: true,
+          pagination: 3,
+          columnSorting: true,
+          colHeaders: myJson.headers,
+          colWidths: [300, 300],
+          columns: [
+            { type: 'text' },
+            { type: 'text' },
+          ]
+        });
+      });
+  </script>
+<br /> 
+  {{template "footer" .}}
+</body>
+
+</html>
+{{end}}

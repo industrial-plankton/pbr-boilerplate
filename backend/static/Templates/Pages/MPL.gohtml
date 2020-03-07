@@ -1,0 +1,40 @@
+{{define "/Protected/MPL/"}}
+<html>
+<script src="https://bossanova.uk/jexcel/v3/jexcel.js"></script>
+<script src="https://bossanova.uk/jsuites/v2/jsuites.js"></script>
+<link rel="stylesheet" href="https://bossanova.uk/jexcel/v3/jexcel.css" type="text/css" />
+<link rel="stylesheet" href="https://bossanova.uk/jsuites/v2/jsuites.css" type="text/css" />
+
+<link rel="stylesheet" href="https://bossanova.uk/jexcel/v3/jexcel.datatables.css" type="text/css" />
+<head>
+  <title>Master Parts List</title>
+</head>
+
+<body>
+{{template "header" .}}
+  <h1>Master Parts List</h1>
+
+<div id="spreadsheet"></div>
+
+<script>
+  fetch("/Protected/api/v1/MPL")
+    .then((response) => {
+      return response.json();
+    })
+    .then((myJson) => {
+      jexcel(document.getElementById('spreadsheet'), {
+        data: myJson.data,
+        colHeaders: myJson.headers,
+        search: true,
+        pagination: 10,
+        minDimensions: [10, 20],
+        defaultColWidth: 100,
+        tableOverflow: false
+      });
+    });
+</script>
+  {{template "footer" .}}
+</body>
+
+</html>
+{{end}}

@@ -3,6 +3,8 @@ package main
 import (
 	"backend/postgres"
 	"crypto/tls"
+	"fmt"
+	"html/template"
 	"net/http"
 	"os"
 	"time"
@@ -28,6 +30,7 @@ var (
 	mysqlDB *sqlx.DB
 	env     config
 	// store   *sessions.CookieStore
+	tmpl *template.Template
 )
 
 const (
@@ -43,6 +46,7 @@ func init() {
 	envconfig.MustProcess("pbr", &env)
 	os.Setenv("SESSION_KEY", string(securecookie.GenerateRandomKey(32)))
 	// fmt.Println(os.Getenv("SESSION_KEY"))
+	tmpl = template.Must(template.ParseGlob(static + "/Templates/*/*.gohtml"))
 }
 func redirectTLS(w http.ResponseWriter, r *http.Request) {
 	utility.TimeTrack(time.Now(), "Redirected to .com")
@@ -69,6 +73,13 @@ func timedHandler(Handler http.HandlerFunc, timeOut int) http.Handler {
 func staticHandler() http.Handler {
 	return http.TimeoutHandler(http.Handler(http.FileServer(http.Dir(static))), 2*time.Second, "Timeout!\n")
 }
+func templateHandler() http.Handler {
+	fmt.Println("server template")
+	return http.TimeoutHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println(r.RequestURI)
+		tmpl.ExecuteTemplate(w, r.RequestURI, nil)
+	}), 2*time.Second, "Timeout!\n")
+}
 
 func main() {
 	// Setup our database connection
@@ -93,13 +104,13 @@ func main() {
 		w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
 		w.Write([]byte("The server is running.\n"))
 	})
-	main.Handle("/signIn/", http.TimeoutHandler(http.Handler(http.FileServer(http.Dir(static))), 2*time.Second, "Timeout!\n"))
 
-	Protected.Handle("/assets/", staticHandler())
-	Protected.Handle("/MPL/", staticHandler())
-	Protected.Handle("/KeywordSearch/", staticHandler())
-	Protected.Handle("/PartEdit/", staticHandler())
-	Protected.Handle("/TagLookup/", staticHandler())
+	main.Handle("/signIn/", templateHandler())
+	Protected.Handle("/assets/", templateHandler())
+	Protected.Handle("/MPL/", templateHandler())
+	Protected.Handle("/KeywordSearch/", templateHandler())
+	Protected.Handle("/PartEdit/", templateHandler())
+	Protected.Handle("/TagLookup/", templateHandler())
 	//Catch all: Redirect to signIn/Portal page
 	Protected.PathPrefix("/").HandlerFunc(indexHandler(signIn))
 	ProtectedAPI.Handle("/MPL", timedHandler(getMPLHandler, 5)).Methods("GET")

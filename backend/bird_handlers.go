@@ -40,7 +40,7 @@ type keywords struct {
 
 func keyWordSearch(w http.ResponseWriter, r *http.Request) {
 	var toSearch keywords
-	var keysSlice []string
+	// var keysSlice []string
 
 	dec := json.NewDecoder(r.Body)
 	dec.DisallowUnknownFields()
@@ -50,25 +50,31 @@ func keyWordSearch(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	keysSlice = append(keysSlice, toSearch.Descriptions, toSearch.Suppliers)
-	for len(keysSlice) < 2 { //append the empty keywords
-		keysSlice = append(keysSlice, "")
-	}
+	// keysSlice = append(keysSlice, toSearch.Descriptions, toSearch.Suppliers)
+	// for len(keysSlice) < 2 { //append the empty keywords
+	// 	keysSlice = append(keysSlice, "")
+	// }
 
-	keysSlice = utility.AddWildCards(keysSlice)
-	keysSlice = []string{keysSlice[0], keysSlice[0], keysSlice[1], keysSlice[1]} //duplicate entries for multicolumn search
+	// keysSlice = utility.SanitizeSQLVariables(keysSlice)
+	keysDisc := utility.RegxOrString(strings.Split(strings.TrimSpace(toSearch.Descriptions), " "))
+	keysSupp := utility.RegxOrString(strings.Split(strings.TrimSpace(toSearch.Suppliers), " "))
+	// keysSlice = utility.AddWildCards(keysSlice)
+	keysSlice := []string{keysDisc, keysDisc, keysSupp, keysSupp} //duplicate entries for multicolumn search
+	fmt.Println(keysSlice)
+	keycolumns := []string{"Technical Description", "Customer Description", "Vendor", "Vendor Part Number"}
+	// keycolumns := []string{"technical_desc", "customer_desc", "name", "part_number"}
 
-	keycolumns := []string{"technical_desc", "customer_desc", "name", "part_number"}
-	combiners := []string{"", " OR ", ") AND (", " OR "}
-	SearchResult, err := IPDatabase.MultiLIKE(mysqlDB, "keywordsearch", keysSlice, keycolumns, combiners)
+	combiners := []string{"OR", ") AND ( ", "OR"}
+
+	SearchResult, err := IPDatabase.MultiLikeOverhaul(mysqlDB, "masterpartslist", keysSlice, keycolumns, combiners)
+	//	SearchResult, err := IPDatabase.MultiLIKE(mysqlDB, "keywordsearch", keysSlice, keycolumns, combiners)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	Headers := IPDatabase.GetHeadersPrepared(mysqlDB, "keywordsearch")
-	for i, e := range Headers {
-		Headers[i] = IPDatabase.Convert(mysqlDB, "column_map", fmt.Sprint(e), "", endcolumn)
-	}
+
+	Headers := IPDatabase.GetHeaders(mysqlDB, "masterpartslist")
+
 	fmt.Println(len(Headers))
 	//	//SearchResult = utility.PopColumn(SearchResult, 0)
 
@@ -96,7 +102,7 @@ func getMPLHandler(w http.ResponseWriter, r *http.Request) {
 	utility.TimeTrack(time.Now(), "getMPL")
 	w.Header().Add("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
 
-	Headers := IPDatabase.GetHeadersPrepared(mysqlDB, "mpltext")
+	Headers := IPDatabase.GetHeaders(mysqlDB, "mpltext")
 	fmt.Println(Headers)
 	View := IPDatabase.GetView(mysqlDB, "masterpartslist")
 	// View := IPDatabase.GetView(mysqlDB, "column_map")
