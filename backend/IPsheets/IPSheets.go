@@ -128,6 +128,9 @@ func ClearRange(rangeData []string, spreadsheetId string, srv *sheets.Service, c
 }
 
 func BatchGet(rangeData []string, spreadsheetId string, srv *sheets.Service) [][][]interface{} {
+	if srv == nil {
+		srv = GetSheetsService2()
+	}
 	defer utility.TimeTrack(time.Now(), "Batch Read from sheet")
 	ctx := context.Background()
 
@@ -146,6 +149,9 @@ func BatchGet(rangeData []string, spreadsheetId string, srv *sheets.Service) [][
 }
 
 func BatchGetCol(rangeData []string, spreadsheetId string, srv *sheets.Service) [][][]interface{} {
+	if srv == nil {
+		srv = GetSheetsService2()
+	}
 	defer utility.TimeTrack(time.Now(), "Batch Read from sheet")
 	ctx := context.Background()
 
