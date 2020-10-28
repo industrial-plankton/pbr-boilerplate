@@ -1,0 +1,425 @@
+= S1060 - 60Hz Wired Control Box =
+
+==Bill of Materials==
+Generated on: 2020-10-23 16:45:31.6356217 -0700 PDT m=+4.234004801
+{| class="wikitable"
+|+
+!SKU
+!Description
+!Qty
+!Location/Notes
+|-
+|[[B1098]]
+|1/4" x 1.250" OD Grade 18-8 Stainless Steel Fender Washer
+|12
+|
+|-
+|[[B1080]]
+|Fastener Mount Cable Holder Curled Circle, for 1/2" Bundle Diameter
+|5
+|
+|-
+|[[R1156]]
+|Wire 600V AC, 18 Gauge, Green Outer Insulation, 200 Feet Long
+|0.5
+|
+|-
+|[[R1122]]
+|Wire 600V AC, 18 Gauge, Yellow Outer Insulation, 200 Feet Long
+|0.5
+|
+|-
+|[[R1123]]
+|Wire 600V AC, 18 Gauge, Red Outer Insulation, 200 Feet Long
+|3
+|
+|-
+|[[R1124]]
+|Wire 600V AC, 18 Gauge, Gray Outer Insulation, 200 Feet Long
+|3
+|
+|-
+|[[B1188]]
+|Plug-in bridge - FBS 2-6
+|1
+|
+|-
+|[[B1107]]
+|#10-32 Nylocks
+|26
+|Screen frame to control box
+|-
+|[[B1175]]
+|40mm Sq Fan Filter Guard Assembly
+|2
+|
+|-
+|[[R1115]]
+|Bare Copper Building Wire, Solid (THHN), 10 Gauge, Black
+|5
+|
+|-
+|[[B1104]]
+|#10-32 BHCS 1"
+|20
+|Screen frame to control box
+|-
+|[[B1054]]
+|END-CAP, Terminal Block Tools & Accessories D-ST 2.5 QUATTRO
+|2
+|
+|-
+|[[B1048]]
+|END BRACKET, Terminal Block Tools & Accessories
+|2
+|
+|-
+|[[B1040]]
+|Bimed NPT 3/4" cord grip, clamp range 0.51 - 0.71" (13 - 18 mm),
+|2
+|
+|-
+|[[R1040]]
+|DIN Rail, 35mm x 7.5mm deep 1M steel rail
+|1.63
+|
+|-
+|[[B1161]]
+|Terminal Block Tools & Accessories D-PT 4-QUATTRO
+|3
+|
+|-
+|[[M1131]]
+|Touchscreen chip mounting bracket
+|1
+|
+|-
+|[[M1132]]
+|computer mounting bracket
+|1
+|
+|-
+|[[B1156]]
+|DIN Rail Terminal Blocks PT 2,5-TG
+|2
+|
+|-
+|[[B1451]]
+|ICL 0.5 OHM 20% 30A 30MM
+|2
+|
+|-
+|[[B1042]]
+|Bimed NPT 1/2" reducer cord grip, clamp range 0.20 - 0.35" ( 5 - 9 mm)
+|7
+|
+|-
+|[[M1187]]
+|Nutrient Pump Gasket, 1/8" Thk Neoprene 60 Duro
+|3
+|
+|-
+|[[B1046]]
+|BLUE, DIN Rail Terminal Blocks PT 2.5-QUATT RO BU
+|4
+|
+|-
+|[[B1157]]
+|Terminal Block Tools & Accessories P-CO XL FUNCTION PLUG-DISCON
+|2
+|
+|-
+|[[B1607]]
+|PCB Screw Terminal 10-32 4 PIN
+|1
+|
+|-
+|[[B1457]]
+|RELAY GEN PURPOSE SPDT 10A 24V
+|3
+|
+|-
+|[[B1047]]
+|GREEN, DIN Rail Terminal Blocks PT 2.5-QUATT RO-PE
+|1
+|
+|-
+|[[B1041]]
+|Bimed NPT 1/2" cord grip, clamp range 0.39 - 0.55" (10 - 14 mm)
+|9
+|
+|-
+|[[B1148]]
+|24VDC Power Supply, 24V 24W 1A
+|1
+|
+|-
+|[[M1188]]
+|Touch Screen Gasket, 1/8" Thk Neoprene 60 Duro
+|1
+|
+|-
+|[[B1147]]
+|CIR BRKR THRM-MAG 4A PUSH-RESET
+|1
+|
+|-
+|[[B1318]]
+|60 W 12V power supply
+|1
+|
+|-
+|[[B1453]]
+|TERM BLOCK 6POS TOP 5.08MM PCB
+|4
+|
+|-
+|[[B1135]]
+|DC Fan 40x28mm 12V 12CFM Ball
+|2
+|
+|-
+|[[B1138]]
+|24VDC Power Supply, 24V 150 W 5A
+|1
+|
+|-
+|[[B1297]]
+|TECO NR3 MID-RANGE MODEL TEMP. PROBE KIT
+|1
+|Made more sense here than in manifold
+|-
+|[[B1452]]
+|TERM BLOCK 9POS TOP 5.08MM PCB
+|7
+|
+|-
+|[[P1159]]
+|CLICK discrete output module, 8-point, 12-24 VDC, sourcing, 1 isolated common(s), 8 point(s) per common, 0.3A/point
+|1
+|
+|-
+|[[M1153]]
+|Control Box PCB
+|1
+|
+|-
+|[[R1142]]
+|Silicone Conformal Coating
+|0.1
+|
+|-
+|[[B1141]]
+|SSR SPST 280VAC 30Amp, Random, Relay
+|1
+|
+|-
+|[[B1142]]
+|SSR SPST 30A@280VAC, Zero-Cross, Relay
+|1
+|
+|-
+|[[B1145]]
+|30A Mag-Hydr GFI Circuit Breaker
+|1
+|
+|-
+|[[B1144]]
+|Welco Peristaltic Pump WPM1
+|3
+|
+|-
+|[[M1247]]
+|Machined Control Box
+|1
+|
+|-
+|[[P1136]]
+|IXIAN pH Transmitter
+|1
+|
+|-
+|[[P1158]]
+|CLICK analog combo PLC module, Input: 4-channel 0-10 VDC, Output: 2-channel 0-10 VDC.
+|1
+|
+|-
+|[[P1157]]
+|CLICK Ethernet Standard PLC, Ethernet and serial ports, 8-point DC input, 6-point relay output
+|1
+|
+|-
+|[[P1160]]
+|12.1" LED 420N 1024X768 W/5W T/S KIT(G)
+|1
+|
+|-
+|[[B1108]]
+|Nylon Unthreaded Spacer, 1/2" Od, 0.375" Length, #10 Screw Size
+|6
+|
+|-
+|[[B1197]]
+|ADAPTER USB A RCPT TO USB B RCPT
+|1
+|
+|-
+|[[B1198]]
+|USB Bulkhead sealing cap
+|1
+|
+|-
+|[[P1156]]
+|Single Board Computer with 32G SSD, 4G RAM, 802.11 and windows 10 IOT enterprise
+|1
+|
+|-
+|[[B1466]]
+|PANEL ADAPTER JACK-JACK BNC 50 OHM
+|1
+|
+|-
+|[[B1102]]
+|#10-32 BHCS 0.375"
+|12
+|
+|-
+|[[B1128]]
+|Nylon Cable Tie, 4" Long, 7/8" Bundle Diameter, 10 lb. Break Strength, Black
+|8
+|
+|-
+|[[B1082]]
+|Insulated Wire Ferrules
+for One 18 Wire Gauge Wire, 0.39" Pin Length
+|16
+|
+|-
+|[[M1264]]
+|1250L Power Supply Harness
+|1
+|
+|-
+|[[B1155]]
+|DIN Rail Terminal Blocks PT 4-QUATTRO BU
+|3
+|
+|-
+|[[B1154]]
+|DIN Rail Terminal Blocks PT 4-QUATTRO
+|4
+|
+|-
+|[[B1308]]
+|Plug-in bridge - FBS 4-6
+|1
+|
+|-
+|[[B1050]]
+|Terminal Block Tools & Accessories FBS 2-5
+|2
+|
+|-
+|[[B1109]]
+|#10 roofing washers (neoprene)
+|6
+|
+|-
+|[[R1117]]
+|24 Gauge Easy-ID Low-Voltage Stranded Cable, dual colour
+|1.5
+|wire for pH transmitter
+|-
+|[[B1623]]
+|LVDS CABLE 20-14PIN 50CM AEA TYPE(G)
+|1
+|
+|-
+|[[B1624]]
+|LED CABLE 5-5PIN 50CM AC3 TYPE(G)
+|1
+|
+|-
+|[[M1059]]
+|Touchscreen Frame, PVC
+|1
+|
+|-
+|[[B1060]]
+|0.110" (2.79mm), 0.125" (3.18mm) Quick Connect Female 18-22 AWG Crimp Connector Fully Insulated
+|6
+|
+|-
+|[[B1118]]
+|#4-40 SHCS 0.5"
+|4
+|
+|-
+|[[B1119]]
+|#4-40 Nylock
+|4
+|
+|-
+|[[B1572]]
+|Cable Assembly Coaxial BNC to BNC Male to Male RG-58C 12.00"
+|1
+|
+|-
+|[[B1573]]
+|BNC Connector Jack, Female Socket 50Ohm Panel Mount, Through Hole Solder
+|1
+|
+|-
+|[[B1427]]
+|EPII 2 POS CABLE ASSEMBLY
+|1
+|
+|-
+|[[R1052]]
+|18/2 AWG, SPT-1 300V, Black Sheath
+|2
+|
+|-
+|[[B1077]]
+|Butt Splice Vinyl-Insulated Sealed, 22-18 AWG (Red)
+|2
+|
+|-
+|[[B1122]]
+|M3 Nylocks
+|4
+|
+|-
+|[[B1199]]
+|CBL USB A-B CON 1' 28/28 AWG
+|1
+|
+|-
+|[[B1200]]
+|90 deg Left RJ45, 3', Ethernet Cable
+|1
+|
+|-
+|[[B1529]]
+|20 Position Cable Assembly Rectangular Plug to Plug 6"
+|3
+|
+|-
+|[[B1530]]
+|20 Position Receptacle Connector 0.100"
+|3
+|
+|-
+|[[S1104]]
+|PLC Distribution Board Assembly
+|1
+|
+|-
+|[[B1710]]
+|Insulated Wire Ferrules for One 24-20 Wire Gauge Wire, 0.39" Pin Length
+|10
+|ferrules for pH transmitter
+|}
+
+----
+End-of-autogenerated

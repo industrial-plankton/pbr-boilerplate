@@ -2,6 +2,7 @@ package Shipments
 
 import (
 	"backend/IPSheets"
+	"backend/Validation"
 	"fmt"
 	"strconv"
 	"strings"
@@ -51,7 +52,7 @@ func parse() []Data {
 			fmt.Println("Missing Data", e, "line:", i+1)
 			continue
 		}
-		CombSKUs := strings.ToUpper(strings.Trim(e[skusCol].(string), " \r\n"))
+		CombSKUs := Validation.ConvStringUpper(e[skusCol])
 		// allotedDate := time.Parse(strings.Trim(e[skusCol].(string), " \r\n"))
 		allotedDate, err := time.Parse(timeLayout, strings.TrimSpace(e[alloted].(string)))
 		if err != nil {
@@ -97,7 +98,7 @@ func validate(data Data) error {
 		return fmt.Errorf("Missing/Unparsable Dates")
 	}
 	if data.Qty == 0 {
-		return fmt.Errorf("Quantity Error for sku: %s , Qty: %s", data.Sku, data.Qty)
+		return fmt.Errorf("Quantity Error for sku: %s , Qty: %g", data.Sku, data.Qty)
 	}
 	return nil
 }

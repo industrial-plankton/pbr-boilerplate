@@ -8,6 +8,12 @@ import (
 	"time"
 )
 
+const (
+	layout  = "2006/01/02"
+	layout2 = "2006-01-02"
+	layout3 = "2006\\01\\02"
+)
+
 func First5(f func(interface{}), data [][]interface{}) {
 	size := len(data)
 	if size > 5 {

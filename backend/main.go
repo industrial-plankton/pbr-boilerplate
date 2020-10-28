@@ -9,6 +9,7 @@ import (
 	"backend/IPSheets/Shipments"
 	"backend/IPSheets/Subs"
 	"backend/IPSheets/Tracking"
+	"backend/WikiGen"
 	// "backend/postgres"
 	// "crypto/tls"
 	// "fmt"
@@ -203,6 +204,13 @@ func main() {
 			data := Shipments.Get()
 			for _, e := range data {
 				fmt.Println(e)
+			}
+		}
+
+		if args[0] == "gen" {
+			subs := Subs.Get()
+			for parent, _ := range subs {
+				WikiGen.CreateFile(WikiGen.GetSubPage(parent), parent)
 			}
 		}
 

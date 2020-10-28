@@ -2,15 +2,16 @@ package mpl
 
 import (
 	"backend/IPSheets"
-	"strings"
+	"backend/Validation"
 )
 
 const (
 	SpreadsheetID = "1-dbCTFEWV4oIv7fDaNldJ-mecOVzxupWrKUcugFcdNo"
 	Range         = "'Master Part List'!A:AK"
 	// Zero indexed Columns
-	SKUCol   = 0
-	CountCol = 21
+	skuCol   = 0
+	descCol  = 1
+	countCol = 21
 )
 
 var allData map[string]Data
@@ -29,7 +30,7 @@ func Refresh() {
 // Data from the MPL that is important
 type Data struct {
 	// SKU                     string
-	// Desc                    string
+	Desc string
 	// Supplier                string
 	// SupplierPN              string
 	// OrderType               string
@@ -69,19 +70,20 @@ func parse() map[string]Data {
 		// 	fmt.Println(err, ", line:", i+1)
 		// 	continue
 		// }
-		SKU := strings.ToUpper(strings.TrimSpace(e[SKUCol].(string)))
-		count := countToBool(e[CountCol].(string))
-		data[SKU] = Data{count}
+		SKU := Validation.ConvStringUpper(e[skuCol])
+		desc := Validation.ConvString(e[descCol])
+		count := Validation.ConvBool(e[countCol])
+		data[SKU] = Data{desc, count}
 	}
 
 	return data
 }
 
-func countToBool(count string) bool {
-	count = strings.ToUpper(strings.TrimSpace(count))
-	if count == "COUNT" {
-		return true
-	} else {
-		return false
-	}
-}
+// func countToBool(count string) bool {
+// 	count = strings.ToUpper(strings.TrimSpace(count))
+// 	if count == "COUNT" {
+// 		return true
+// 	} else {
+// 		return false
+// 	}
+// }
