@@ -1,11 +1,8 @@
 package IPSheets
 
 import (
-	"backend/Enums/Doorway"
-	"backend/Validation"
 	"fmt"
 	"strings"
-	"time"
 )
 
 const (
@@ -26,52 +23,57 @@ var allData []Data
 var emptyCollection = []Data{}
 var emptyData = Data{}
 
-type sheet struct {
+type Sheet struct {
+	Range           string // Assign this to the correct Value when using
+	SpreadsheetID   string // Assign this to the correct Value when using
 	allData         interface{}
-	Range           string      // Assign this to the correct Value when using
-	SpreadsheetID   string      // Assign this to the correct Value when using
-	emptyCollection interface{} // Shadow this to the correct type when using
-	emptyData       interface{} // Shadow this to the correct type when using
+	EmptyCollection interface{} // Shadow this to the correct type when using
+	EmptyData       line        // Shadow this to the correct type when using
 }
 
-func (s sheet) Get() interface{} { // Shadow this to the correct type when using
+type line interface {
+	ProcessNew(i int, e []interface{})
+	AppendNew(interface{})
+}
+
+func (s Sheet) Get() interface{} { // Shadow this to the correct type when using
 	if s.allData == nil {
 		s.Refresh()
 	}
 	return s.allData //.(emptyCollectiontype)
 }
 
-func (s sheet) Refresh() {
+func (s Sheet) Refresh() {
 	s.allData = s.parse()
 }
 
 // Data from the MPL that is important
 type Data struct {
-	Sku       string
-	Qty       float64
-	RecQty    float64
-	Doorway   byte
-	Completed bool
-	OrderDate time.Time
-	ExpDate   time.Time
-	RecDate   time.Time
+	// Sku       string
+	// Qty       float64
+	// RecQty    float64
+	// Doorway byte
+	// Completed bool
+	// OrderDate time.Time
+	// ExpDate   time.Time
+	// RecDate   time.Time
 }
 
 // parse maps the interface to the mpl Data struct
-func (s sheet) parse() interface{} {
+func (s Sheet) parse() interface{} {
 	Sheetdata := BatchGet([]string{s.Range}, s.SpreadsheetID, nil)[0]
 
-	data := emptyCollection
+	data := s.EmptyCollection
 	for i, e := range Sheetdata {
-		newData := Data{}
-		newData.processNew(i, e)
-		newData.appendNew(&data)
+		newData := s.EmptyData
+		newData.ProcessNew(i, e)
+		newData.AppendNew(&data)
 	}
 
 	return data
 }
 
-func (data Data) processNew(i int, e []interface{}) {
+func (data Data) ProcessNew(i int, e []interface{}) {
 	defer data.handleError(i)
 	data.newData(e)
 	data.rejectData()
@@ -90,32 +92,37 @@ func (data Data) handleError(line int) {
 }
 
 // Adds new Data
-func (new Data) appendNew(data interface{}) {
+func (new Data) AppendNew(data interface{}) {
 
-	data = append(data.([]Data), new)
+	data = append(*data.(*[]Data), new)
 
 }
 
 // Formats and Checks new Data struct
 func (data *Data) newData(line []interface{}) {
 	defer func() {
-		err := recover().(error)
-		if strings.Contains(err.Error(), "index") {
-			return
-		}
-		if strings.Contains(err.Error(), "&continue&") { //Print off continue flagged errors
-			fmt.Println(err)
-		} else {
-			// Rethrow
-			panic(err)
+		err := recover()
+		if err != nil {
+			if strings.Contains(err.(error).Error(), "index") {
+				return
+			}
+			if strings.Contains(err.(error).Error(), "&continue&") { //Print off continue flagged errors
+				fmt.Println(err)
+			} else {
+				// Rethrow
+				panic(err)
+			}
 		}
 	}()
 	//  Convert Data using Validation conversion functions
-	data.Doorway = Doorway.ToDoorway(line[doorwayCol])
-	data.Sku = Validation.Sku(line[skuCol])
-	data.Qty = Validation.ConvNum(line[qtyCol])
-
+	data.convData(line)
 	return
+}
+
+func (data *Data) convData(line []interface{}) {
+	// data.Doorway = Doorway.ToDoorway(line[doorwayCol])
+	// data.Sku = Validation.Sku(line[skuCol])
+	// data.Qty = Validation.ConvNum(line[qtyCol])
 }
 
 // Reject data that doesn't make sense
@@ -126,8 +133,10 @@ func (data Data) rejectData() {
 // Check for Warnign as handle them
 func (data *Data) checkWarnings() {
 	defer func() {
-		err := recover().(error)
-		fmt.Println(err)
+		err := recover()
+		if err != nil {
+			fmt.Println(err.(error))
+		}
 	}()
 	data.warningData()
 }

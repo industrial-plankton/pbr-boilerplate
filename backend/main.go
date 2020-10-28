@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"backend/IPSheets/Parsing"
 	"backend/IPSheets/Shipments"
 	"backend/IPSheets/Subs"
 	"backend/IPSheets/Tracking"
@@ -214,5 +215,8 @@ func main() {
 			}
 		}
 
+		if "test" == text {
+			Parsing.Get()
+		}
 	}
 }
