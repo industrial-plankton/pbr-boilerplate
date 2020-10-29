@@ -28,12 +28,19 @@ type Sheet struct {
 	SpreadsheetID   string // Assign this to the correct Value when using
 	allData         interface{}
 	EmptyCollection interface{} // Shadow this to the correct type when using
-	EmptyData       line        // Shadow this to the correct type when using
+	EmptyData       Line        // Shadow this to the correct type when using
 }
 
-type line interface {
-	ProcessNew(i int, e []interface{})
+type Line interface {
+	ProcessNew(i int, e []interface{}, obj Line)
 	AppendNew(interface{})
+	handleError(i int)
+	newData(e []interface{}, obj Line)
+	rejectData()
+	checkWarnings()
+	warningData()
+	assumeData()
+	ConvData(line []interface{})
 }
 
 func (s Sheet) Get() interface{} { // Shadow this to the correct type when using
@@ -66,23 +73,25 @@ func (s Sheet) parse() interface{} {
 	data := s.EmptyCollection
 	for i, e := range Sheetdata {
 		newData := s.EmptyData
-		newData.ProcessNew(i, e)
+		newData.ProcessNew(i, e, newData)
 		newData.AppendNew(&data)
 	}
 
 	return data
 }
 
-func (data Data) ProcessNew(i int, e []interface{}) {
-	defer data.handleError(i)
-	data.newData(e)
-	data.rejectData()
-	data.checkWarnings()
-	data.assumeData()
+func (data *Data) ProcessNew(i int, e []interface{}, obj Line) {
+	// var line Line = data
+
+	defer obj.handleError(i)
+	obj.newData(e, obj)
+	obj.rejectData()
+	obj.checkWarnings()
+	obj.assumeData()
 }
 
 // Handles errors thrown by newData, continues if only minor
-func (data Data) handleError(line int) {
+func (data *Data) handleError(line int) {
 	err := recover()
 	if err != nil {
 		if !strings.Contains(err.(error).Error(), "&minor&") && !strings.Contains(err.(error).Error(), "index") && line != 0 { //Print off errors that dont contain the &minor& flag, and index errors
@@ -92,14 +101,15 @@ func (data Data) handleError(line int) {
 }
 
 // Adds new Data
-func (new Data) AppendNew(data interface{}) {
-
-	data = append(*data.(*[]Data), new)
+func (new *Data) AppendNew(data interface{}) {
+	// var line line = new
+	data = append(*data.(*[]Data), *new)
 
 }
 
 // Formats and Checks new Data struct
-func (data *Data) newData(line []interface{}) {
+func (data *Data) newData(newline []interface{}, obj Line) {
+	// var ref Line = data
 	defer func() {
 		err := recover()
 		if err != nil {
@@ -115,18 +125,18 @@ func (data *Data) newData(line []interface{}) {
 		}
 	}()
 	//  Convert Data using Validation conversion functions
-	data.convData(line)
+	obj.ConvData(newline)
 	return
 }
 
-func (data *Data) convData(line []interface{}) {
+func (data *Data) ConvData(line []interface{}) {
 	// data.Doorway = Doorway.ToDoorway(line[doorwayCol])
 	// data.Sku = Validation.Sku(line[skuCol])
 	// data.Qty = Validation.ConvNum(line[qtyCol])
 }
 
 // Reject data that doesn't make sense
-func (data Data) rejectData() {
+func (data *Data) rejectData() {
 	// panic on bad values
 }
 

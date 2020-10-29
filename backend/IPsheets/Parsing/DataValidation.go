@@ -26,7 +26,7 @@ func GetDataVal() []Data {
 		DataValidation.Range = "'Data Validation'!B:D"
 		DataValidation.SpreadsheetID = "1-dbCTFEWV4oIv7fDaNldJ-mecOVzxupWrKUcugFcdNo"
 		DataValidation.EmptyCollection = []Data{}
-		DataValidation.EmptyData = Data{}
+		DataValidation.EmptyData = &Data{}
 	}
 	return DataValidation.Get().([]Data) //.(emptyCollectiontype)
 }
@@ -50,31 +50,25 @@ func parse() []Data {
 	fmt.Print("wor")
 	data := []Data{}
 	for i, e := range Sheetdata {
-		newData := Data{}
-		newData.ProcessNew(i, e)
-		newData.AppendNew(&data)
+		newData := &Data{}
+		var inter IPSheets.Line = newData
+		inter.ProcessNew(i, e, inter)
+		inter.AppendNew(&data)
 	}
 
 	return data
 }
 
-func (data *Data) convData(line []interface{}) {
+func (data *Data) ConvData(line []interface{}) {
 	fmt.Println("woooos")
 	data.One = Validation.ConvString(line[0])
 	data.Two = Validation.ConvString(line[1])
 	data.Three = Validation.ConvString(line[2])
 }
-func (data Data) ProcessNew(i int, e []interface{}) {
-	defer data.handleError(i)
-	data.newData(e)
-	data.rejectData()
-	data.checkWarnings()
-	data.assumeData()
-}
 
 // Adds new Data
-func (new Data) AppendNew(data interface{}) {
+func (new *Data) AppendNew(data interface{}) {
 
-	data = append(*data.(*[]Data), new)
+	data = append(*data.(*[]Data), *new)
 
 }
