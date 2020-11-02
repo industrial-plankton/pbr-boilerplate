@@ -1,74 +1,60 @@
 package Parsing
 
 import (
-	"backend/IPSheets"
 	"backend/Validation"
-	"fmt"
+
+	"github.com/jinzhu/copier"
 )
 
-var DataValidation = IPSheets.Sheet{}
+var DataValidation = &dataVal{}
 
-// type DataVal struct {
-// 	IPSheets.Sheet
-// 	emptyCollection []Data // Shadow this to the correct type when using
-// 	emptyData       Data   // Shadow this to the correct type when using
-// }
+func GetValidation() []DataValidationData { // Easy access func
+	return DataValidation.Get(DataValidation).([]DataValidationData)
+}
 
-type Data struct {
-	IPSheets.Data
+type dataVal struct {
+	Sheet
+	EmptyCollection []DataValidationData // Shadow this to the correct type when using
+}
+
+func (s *dataVal) Init() {
+	s.Range = "'Data Validation'!B:D"
+	s.SpreadsheetID = INVMANGMENT
+	s.EmptyData = &dataValidationStruct{}
+}
+
+func (s *dataVal) Parse() {
+	Sheetdata := s.getSheet()
+
+	data := s.EmptyCollection //EmptyCollection
+	copier.Copy(&data, &s.EmptyCollection)
+	for i, e := range Sheetdata {
+		var newData Line
+		copier.Copy(&newData, &s.EmptyData)
+		newData.processNew(i, e, newData)
+		newData.appendNew(&data)
+	}
+	s.AllData = data
+}
+
+type dataValidationStruct struct {
+	SheetParseBase // Base struct for Line method inheritance
+	DataValidationData
+}
+
+type DataValidationData struct { // Must be Exported
 	One   string
 	Two   string
 	Three string
 }
 
-func GetDataVal() []Data {
-	if DataValidation.Range == "" {
-		DataValidation.Range = "'Data Validation'!B:D"
-		DataValidation.SpreadsheetID = "1-dbCTFEWV4oIv7fDaNldJ-mecOVzxupWrKUcugFcdNo"
-		DataValidation.EmptyCollection = []Data{}
-		DataValidation.EmptyData = &Data{}
-	}
-	return DataValidation.Get().([]Data) //.(emptyCollectiontype)
-}
-
-var allData []Data
-
-func Get() []Data {
-	if allData == nil {
-		Refresh()
-	}
-	return allData
-}
-
-func Refresh() {
-	allData = parse()
-}
-
-// parse maps the interface to the mpl Data struct
-func parse() []Data {
-	Sheetdata := IPSheets.BatchGet([]string{"'Data Validation'!B:D"}, "1-dbCTFEWV4oIv7fDaNldJ-mecOVzxupWrKUcugFcdNo", nil)[0]
-	fmt.Print("wor")
-	data := []Data{}
-	for i, e := range Sheetdata {
-		newData := &Data{}
-		var inter IPSheets.Line = newData
-		inter.ProcessNew(i, e, inter)
-		inter.AppendNew(&data)
-	}
-
-	return data
-}
-
-func (data *Data) ConvData(line []interface{}) {
-	fmt.Println("woooos")
+func (data *dataValidationStruct) convData(line []interface{}) {
 	data.One = Validation.ConvString(line[0])
 	data.Two = Validation.ConvString(line[1])
 	data.Three = Validation.ConvString(line[2])
 }
 
 // Adds new Data
-func (new *Data) AppendNew(data interface{}) {
-
-	data = append(*data.(*[]Data), *new)
-
+func (new *dataValidationStruct) appendNew(data interface{}) {
+	*data.(*[]DataValidationData) = append(*data.(*[]DataValidationData), new.DataValidationData)
 }

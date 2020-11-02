@@ -6,12 +6,11 @@ import (
 	"strings"
 	"time"
 
-	"backend/IPSheets/Subs"
-	"backend/IPSheets/mpl"
+	"backend/IPSheets/Parsing"
 )
 
 func GetSubPage(parent string) string {
-	mpl := mpl.Get()
+	mpl := Parsing.GetMpl()
 	var sb strings.Builder
 
 	sb.WriteString(fmt.Sprintln("=", parent, "-", mpl[parent].Desc, "=\n"))
@@ -26,8 +25,8 @@ func GetSubPage(parent string) string {
 }
 
 func GenBOM(parent string) string {
-	mpl := mpl.Get()
-	Children := Subs.Get()[parent]
+	mpl := Parsing.GetMpl()
+	Children := Parsing.GetSubs()[parent]
 
 	data := make([][]interface{}, len(Children)+1)
 	data[0] = []interface{}{"SKU", "Description", "Qty", "Location/Notes"}

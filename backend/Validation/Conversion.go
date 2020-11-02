@@ -13,18 +13,29 @@ const (
 	layout3 = "2006\\01\\02"
 )
 
-func ConvStringUpper(val interface{}) string {
-	return strings.ToUpper(strings.TrimSpace(val.(string)))
+func ConvStringUpper(val interface{}) (out string) {
+	out = strings.ToUpper(strings.TrimSpace(val.(string)))
+	if out == "" {
+		panic(fmt.Errorf("%s", "&minor& Nil string passed"))
+	}
+	return
 }
 
-func ConvString(val interface{}) string {
-	return strings.TrimSpace(val.(string))
+func ConvString(val interface{}) (out string) {
+	out = strings.TrimSpace(val.(string))
+	if out == "" {
+		panic(fmt.Errorf("%s", "&minor& Nil string passed"))
+	}
+	return
 }
 
 func ConvBool(val interface{}) (out bool) {
 	val = strings.ToUpper(strings.TrimSpace(val.(string)))
 	if val.(string) == "COUNT" || val.(string) == "\u2714" {
 		return true
+	}
+	if val.(string) == "NO COUNT" {
+		return false
 	}
 	if val.(string) == "" {
 		return false
@@ -43,6 +54,20 @@ func ConvNum(val interface{}) (out float64) {
 	out, err := strconv.ParseFloat(strings.ToUpper(strings.TrimSpace(val.(string))), 64)
 	if err != nil {
 		panic(err)
+	}
+	return
+}
+
+func ConvNumPos(val interface{}) (out float64) {
+	if val == "" {
+		panic(fmt.Errorf("%s", "&minor& nil number passes to pos only converter"))
+	}
+	out, err := strconv.ParseFloat(strings.ToUpper(strings.TrimSpace(val.(string))), 64)
+	if err != nil {
+		panic(err)
+	}
+	if out < 0 {
+		panic(fmt.Errorf("%s", "&minor& negative number passes to pos only converter"))
 	}
 	return
 }

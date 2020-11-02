@@ -12,6 +12,7 @@ require (
 	github.com/gorilla/securecookie v1.1.1
 	github.com/gorilla/sessions v1.2.0
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
+	github.com/jinzhu/copier v0.0.0-20201025035756-632e723a6687
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/json-iterator/go v1.1.6
 	github.com/kelseyhightower/envconfig v1.4.0

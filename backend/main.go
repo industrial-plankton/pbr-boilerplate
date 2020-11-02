@@ -7,9 +7,8 @@ import (
 	"strings"
 
 	"backend/IPSheets/Parsing"
-	"backend/IPSheets/Shipments"
-	"backend/IPSheets/Subs"
-	"backend/IPSheets/Tracking"
+
+	// "backend/IPSheets/Subs"
 	"backend/WikiGen"
 	// "backend/postgres"
 	// "crypto/tls"
@@ -191,32 +190,36 @@ func main() {
 		if strings.Compare("track", text) == 0 {
 			// mpl := IPSheets.BatchGet([]string{"2020 Tracking!A:AK"}, "1pdhA4p4n4LbOQCrJgmSDZOzHBtV6mIfF2JUUrtxvGuc", srv)
 			// IPSheets.First5(IPSheets.TryNum, mpl[0])
-			Tracking.Get()
+			Parsing.Track.Get(Parsing.Track)
 		}
 
 		// if strings.Compare("flc", text) == 0 {
-		if "flc" == args[0] {
-			data := Subs.FindOffspring(strings.ToUpper(args[1]), true)
-			fmt.Print(data)
-			// IPSheets.Printmap(data)
-		}
+		// if "flc" == args[0] {
+		// 	data := Subs.FindOffspring(strings.ToUpper(args[1]), true)
+		// 	fmt.Print(data)
+		// 	// IPSheets.Printmap(data)
+		// }
 
-		if "ship" == text {
-			data := Shipments.Get()
-			for _, e := range data {
-				fmt.Println(e)
-			}
-		}
+		// if "ship" == text {
+		// 	data := Parsing.GetShip() //Shipments.Get()
+		// 	for _, e := range data {
+		// 		fmt.Println(e)
+		// 	}
+		// }
 
 		if args[0] == "gen" {
-			subs := Subs.Get()
+			subs := Parsing.Subs.Get(Parsing.Subs).(map[string][]Parsing.SubsData)
 			for parent, _ := range subs {
 				WikiGen.CreateFile(WikiGen.GetSubPage(parent), parent)
 			}
 		}
 
 		if "test" == text {
-			Parsing.Get()
+			fmt.Println(Parsing.GetSubs())
+		}
+
+		if "ship" == text {
+			fmt.Println(Parsing.GetShip())
 		}
 	}
 }
