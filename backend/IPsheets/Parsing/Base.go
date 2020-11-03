@@ -5,8 +5,6 @@ import (
 	"strings"
 
 	"backend/IPSheets"
-
-	"github.com/jinzhu/copier"
 )
 
 const (
@@ -15,22 +13,23 @@ const (
 )
 
 type Sheet struct {
-	Range           string // Assign this to the correct Value when using
-	SpreadsheetID   string // Assign this to the correct Value when using
-	AllData         interface{}
-	EmptyCollection []interface{} // Shadow this to the correct type when using
-	EmptyData       Line          // Assign this the correct type when using
+	Range         string // Assign this to the correct Value when using
+	SpreadsheetID string // Assign this to the correct Value when using
+	AllData       interface{}
+	// EmptyCollection []interface{} // Shadow this to the correct type when using
+	// EmptyData       Line          // Assign this the correct type when using
+	Errors []error
 }
 
 type Line interface {
-	processNew(i int, e []interface{}, obj Line)
+	processNew(i int, e []interface{}, obj Line, collection interface{}, errors *[]error)
 	appendNew(interface{}) //* Must Override
-	handleError(i int)
+	handleError(i int, errors *[]error)
 	newData(e []interface{}, obj Line)
 	rejectData()
-	checkWarnings(obj Line)
+	checkWarnings(line int, obj Line, errors *[]error)
 	warningData()
-	assumeData()
+	assumeData(errors *[]error)
 	convData(line []interface{}) //* Must Override
 }
 
@@ -39,13 +38,14 @@ type SheetParse interface {
 	Parse() //* Must Override
 	Init()  //* Must Override
 	getSheet() [][]interface{}
+	GetErrors() []error
 }
 
 //* Must Override
 func (s *Sheet) Init() { // Shadow this to the correct type when using
 	s.Range = "2020 Tracking!A:U"
 	s.SpreadsheetID = "1pdhA4p4n4LbOQCrJgmSDZOzHBtV6mIfF2JUUrtxvGuc"
-	s.EmptyData = &SheetParseBase{}
+	// s.EmptyData = &SheetParseBase{}
 }
 
 func (s *Sheet) Get(ref SheetParse) interface{} { // Shadow this to the correct type when using // OR Assert correct type when receiving
@@ -69,21 +69,23 @@ type Part struct {
 
 //* Must Override, should usually just be a copy with the attached type corrected
 func (s *Sheet) Parse() {
-	Sheetdata := s.getSheet()
-	data := s.EmptyCollection //EmptyCollection
-	copier.Copy(&data, &s.EmptyCollection)
-	for i, e := range Sheetdata {
-		var newData Line
-		copier.Copy(&newData, &s.EmptyData)
-		newData.processNew(i, e, newData)
-		newData.appendNew(&data)
-	}
+	// Sheetdata := s.getSheet()
+	collection := new([]interface{}) //EmptyCollection
+	// for i, e := range Sheetdata {
+	// newData := new(Line) //EmptyData
+	// newData.processNew(i, e, newData, collection, &s.Errors)
+	// newData.appendNew(&data)
+	// }
 
-	s.AllData = data
+	s.AllData = collection
 }
 
 func (s *Sheet) getSheet() [][]interface{} {
 	return IPSheets.BatchGet([]string{s.Range}, s.SpreadsheetID, nil)[0]
+}
+
+func (s *Sheet) GetErrors() []error {
+	return s.Errors
 }
 
 //* Must Override
@@ -98,17 +100,20 @@ func (new *SheetParseBase) appendNew(data interface{}) {
 //* Must Override
 // Converts interfaces into Stuct data
 func (data *SheetParseBase) convData(line []interface{}) {
+	// Must be parsed in column order else could return before evaluation
 	// data.Doorway = Doorway.ToDoorway(line[doorwayCol])
 	// data.Sku = Validation.Sku(line[skuCol])
 	// data.Qty = Validation.ConvNum(line[qtyCol])
 }
 
-func (data *SheetParseBase) processNew(i int, e []interface{}, obj Line) {
-	defer obj.handleError(i)
+func (data *SheetParseBase) processNew(i int, e []interface{}, obj Line, collection interface{}, errors *[]error) {
+	defer obj.handleError(i, errors)
 	obj.newData(e, obj)
 	obj.rejectData()
-	obj.checkWarnings(obj)
-	obj.assumeData()
+	obj.checkWarnings(i, obj, errors)
+	obj.assumeData(errors)
+	// fmt.Println(i+1, obj)
+	obj.appendNew(collection)
 }
 
 // Formats and Checks new Data struct
@@ -129,15 +134,16 @@ func (data *SheetParseBase) newData(newline []interface{}, obj Line) {
 	}()
 	//  Convert Data using Validation conversion functions
 	obj.convData(newline)
-	return
 }
 
 // Handles errors thrown by newData, continues if only minor
-func (data *SheetParseBase) handleError(line int) {
+func (data *SheetParseBase) handleError(line int, errors *[]error) {
 	err := recover()
 	if err != nil {
 		if !strings.Contains(err.(error).Error(), "&minor&") && !strings.Contains(err.(error).Error(), "index") && line != 0 { //Print off errors that dont contain the &minor& flag, and index errors
-			fmt.Println(err.(error).Error(), ", line:", line+1)
+			msg := fmt.Errorf("%v %v %v", err.(error).Error(), ", line:", line+1)
+			fmt.Println(msg)
+			*errors = append(*errors, msg)
 		}
 	}
 }
@@ -148,11 +154,14 @@ func (data *SheetParseBase) rejectData() {
 }
 
 // Check for Warning and handle them
-func (data *SheetParseBase) checkWarnings(obj Line) {
+func (data *SheetParseBase) checkWarnings(line int, obj Line, errors *[]error) {
 	defer func() {
 		err := recover()
 		if err != nil {
-			fmt.Println(err.(error))
+			msg := fmt.Errorf("%v %v %v", err.(error).Error(), ", line:", line+1)
+			fmt.Println(msg)
+			*errors = append(*errors, msg)
+			// fmt.Println(err.(error))
 		}
 	}()
 	obj.warningData()
@@ -174,7 +183,6 @@ func (data *SheetParseBase) warningData() {
 	}
 }
 
-// Reject data that doesn't make sense
-func (data *SheetParseBase) assumeData() {
-	// Assume any missing data that you can
+// Assume any missing data that you can
+func (data *SheetParseBase) assumeData(errors *[]error) {
 }

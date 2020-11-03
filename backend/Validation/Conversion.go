@@ -8,10 +8,13 @@ import (
 )
 
 const (
-	layout  = "2006/01/02"
-	layout2 = "2006-01-02"
-	layout3 = "2006\\01\\02"
+	layout = "2006/01/02"
 )
+
+func ConvStringUpperNilable(val interface{}) (out string) {
+	out = strings.ToUpper(strings.TrimSpace(val.(string)))
+	return
+}
 
 func ConvStringUpper(val interface{}) (out string) {
 	out = strings.ToUpper(strings.TrimSpace(val.(string)))
@@ -80,14 +83,14 @@ func ConvDate(val interface{}) (t time.Time) {
 	if strings.Contains(val.(string), "B") {
 		panic(fmt.Errorf("%s", "&minor& Backordered"))
 	}
-	t, err := time.Parse(layout, val.(string))
+	if strings.Contains(val.(string), "CANCELLED") {
+		panic(fmt.Errorf("%s", "&minor& CANCELLED"))
+	}
+	date := strings.ReplaceAll(val.(string), "-", "/")
+	date = strings.ReplaceAll(date, "\\", "/")
+
+	t, err := time.Parse(layout, date)
 	if err != nil {
-		if strings.Contains(err.Error(), "-") {
-			t, err = time.Parse(layout2, val.(string))
-		}
-		if strings.Contains(err.Error(), "\\") {
-			t, err = time.Parse(layout3, val.(string))
-		}
 		if err != nil {
 			panic(err)
 		}

@@ -2,8 +2,6 @@ package Parsing
 
 import (
 	"backend/Validation"
-
-	"github.com/jinzhu/copier"
 )
 
 var DataValidation = &dataVal{}
@@ -14,27 +12,24 @@ func GetValidation() []DataValidationData { // Easy access func
 
 type dataVal struct {
 	Sheet
-	EmptyCollection []DataValidationData // Shadow this to the correct type when using
+	// EmptyCollection []DataValidationData // Shadow this to the correct type when using
 }
 
 func (s *dataVal) Init() {
 	s.Range = "'Data Validation'!B:D"
 	s.SpreadsheetID = INVMANGMENT
-	s.EmptyData = &dataValidationStruct{}
+	// s.EmptyData = &dataValidationStruct{}
 }
 
 func (s *dataVal) Parse() {
 	Sheetdata := s.getSheet()
 
-	data := s.EmptyCollection //EmptyCollection
-	copier.Copy(&data, &s.EmptyCollection)
+	collection := new([]DataValidationData) //EmptyCollection
 	for i, e := range Sheetdata {
-		var newData Line
-		copier.Copy(&newData, &s.EmptyData)
-		newData.processNew(i, e, newData)
-		newData.appendNew(&data)
+		newData := new(dataValidationStruct) //EmptyData
+		newData.processNew(i, e, newData, collection, &s.Errors)
 	}
-	s.AllData = data
+	s.AllData = collection
 }
 
 type dataValidationStruct struct {
@@ -43,15 +38,20 @@ type dataValidationStruct struct {
 }
 
 type DataValidationData struct { // Must be Exported
-	One   string
-	Two   string
-	Three string
+	Unit       string
+	Multiplier float64
+	Type       string
 }
 
 func (data *dataValidationStruct) convData(line []interface{}) {
-	data.One = Validation.ConvString(line[0])
-	data.Two = Validation.ConvString(line[1])
-	data.Three = Validation.ConvString(line[2])
+	const (
+		unitCol = 0
+		multCol = 1
+		typeCol = 2
+	)
+	data.Unit = Validation.ConvString(line[unitCol])
+	data.Multiplier = Validation.ConvNumPos(line[multCol])
+	data.Type = Validation.ConvString(line[typeCol])
 }
 
 // Adds new Data

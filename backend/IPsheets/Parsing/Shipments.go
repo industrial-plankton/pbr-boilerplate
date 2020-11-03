@@ -6,8 +6,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/jinzhu/copier"
 )
 
 var Shipments = &shipments{}
@@ -18,13 +16,13 @@ func GetShip() []ShipmentsData { // Easy access func
 
 type shipments struct {
 	Sheet
-	EmptyCollection []ShipmentsData // Shadow this to the correct type when using
+	// EmptyCollection []ShipmentsData // Shadow this to the correct type when using
 }
 
 func (s *shipments) Init() {
 	s.Range = "'Shipments'!A:N"
 	s.SpreadsheetID = INVMANGMENT
-	s.EmptyData = &shipmentsStruct{}
+	// s.EmptyData = &shipmentsStruct{}
 }
 
 func (s *shipments) Get(ref SheetParse) interface{} { // Shadow this to the correct type when using // OR Assert correct type when receiving
@@ -40,18 +38,12 @@ func (s *shipments) Get(ref SheetParse) interface{} { // Shadow this to the corr
 func (s *shipments) Parse() {
 	Sheetdata := s.getSheet()
 
-	data := s.EmptyCollection //EmptyCollection
-	copier.Copy(&data, &s.EmptyCollection)
+	collection := new([]ShipmentsData) //EmptyCollection
 	for i, e := range Sheetdata {
-		if i == 1 {
-			continue
-		}
-		var newData Line
-		copier.Copy(&newData, &s.EmptyData)
-		newData.processNew(i, e, newData)
-		newData.appendNew(&data)
+		newData := new(shipmentsStruct)
+		newData.processNew(i, e, newData, collection, &s.Errors)
 	}
-	s.AllData = data
+	s.AllData = collection
 }
 
 type shipmentsStruct struct {
@@ -60,8 +52,7 @@ type shipmentsStruct struct {
 }
 
 type ShipmentsData struct { // Must be Exported
-	Sku     string
-	Qty     float64
+	Parts   []Part
 	Staged  time.Time
 	Shipped time.Time
 	Alloted time.Time
@@ -70,52 +61,65 @@ type ShipmentsData struct { // Must be Exported
 func (data *shipmentsStruct) convData(line []interface{}) {
 	const (
 		skusCol = 0
+		alloted = 10
 		staged  = 11
 		shipped = 12
-		alloted = 10
 	)
-	data.Sku = Validation.ConvStringUpper(line[skusCol])
-	data.Qty = 1 // default Qty to 1
 	data.Alloted = Validation.ConvDate(line[alloted])
 	data.Staged = Validation.ConvDate(line[staged])
 	data.Shipped = Validation.ConvDate(line[shipped])
+
+	parts := strings.Split(Validation.ConvStringUpper(line[skusCol]), ",")
+	data.Parts = make([]Part, len(parts))
+	for i, ship := range parts {
+		for split, info := range strings.Split(ship, "*") {
+			if split > 1 {
+				panic(fmt.Errorf("%s", "Incorrect SKU formating"))
+			}
+			_, err := strconv.ParseFloat(info, 64)
+			if err != nil {
+				data.Parts[i].Sku = Validation.ConvStringUpper(info)
+			} else {
+				data.Parts[i].Qty = Validation.ConvNumPos(info)
+			}
+		}
+	}
 
 }
 
 // Adds new Data
 func (new *shipmentsStruct) appendNew(data interface{}) {
-	for _, ship := range strings.Split(new.ShipmentsData.Sku, ",") {
-		newLine := new.ShipmentsData
-		copier.Copy(&newLine, new.ShipmentsData)
-		for split, info := range strings.Split(ship, "*") {
-			if split > 1 {
-				// panic(fmt.Errorf("%s", "Incorrect SKU formating"))
-				fmt.Println("%s", "Incorrect SKU formating")
-				continue
-			}
-			_, err := strconv.ParseFloat(info, 64)
-			if err != nil {
-				newLine.Sku = Validation.ConvStringUpper(info)
-			} else {
-				newLine.Qty = Validation.ConvNumPos(info)
-			}
-		}
-		if newLine.Sku != "" && newLine.Qty != 0 {
-			*data.(*[]ShipmentsData) = append(*data.(*[]ShipmentsData), newLine)
-			fmt.Println(newLine)
-		}
-	}
-	// *data.(*[]ShipmentsData) = append(*data.(*[]ShipmentsData), new.ShipmentsData)
-
+	*data.(*[]ShipmentsData) = append(*data.(*[]ShipmentsData), new.ShipmentsData)
 }
 
 // Reject data that doesn't make sense
 func (data *shipmentsStruct) rejectData() {
-	if data.Sku == "" {
-		panic(fmt.Errorf("%s", "nil sku"))
-	}
-	if data.Staged == data.Alloted && data.Staged == data.Shipped {
-		panic(fmt.Errorf("%s", "Dates Invarient"))
-	}
 	// panic on bad values
+	if len(data.Parts) == 0 {
+		panic(fmt.Errorf("%s", "no parts"))
+	}
+
+	if data.Staged.Equal(data.Alloted) && data.Staged.Equal(data.Shipped) {
+		panic(fmt.Errorf("%s", "Bad Dates"))
+	}
+
+	for _, part := range data.Parts {
+		if part.Sku == "" {
+			panic(fmt.Errorf("%s", "nil parts"))
+		}
+	}
+}
+
+// Assume any missing data that you can
+func (data *shipmentsStruct) assumeData(errors *[]error) {
+	for i, part := range data.Parts {
+		if part.Qty == 0 {
+			data.Parts[i].Qty = 1
+		}
+	}
+
+	// Assume ship 2 years from now if no date
+	if data.Shipped.IsZero() {
+		data.Shipped = time.Now().AddDate(2, 0, 0)
+	}
 }

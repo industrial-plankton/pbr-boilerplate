@@ -22,15 +22,14 @@ package Parsing
 // func (s *dataVal) Parse() { // Change type to correct sheet struct
 // 	Sheetdata := s.getSheet()
 
-// 	data := s.EmptyCollection //EmptyCollection
-// 	copier.Copy(&data, &s.EmptyCollection)
+// 	collection := s.EmptyCollection //EmptyCollection
+// 	copier.Copy(&collection, &s.EmptyCollection)
 // 	for i, e := range Sheetdata {
 // 		var newData Line
 // 		copier.Copy(&newData, &s.EmptyData)
-// 		newData.processNew(i, e, newData)
-// 		newData.appendNew(&data)
+// 		newData.processNew(i, e, newData, &collection, &s.Errors)
 // 	}
-// 	s.AllData = data
+// 	s.AllData = collection
 // }
 
 // type dataValidationStruct struct { // Struct that inherits base and data structs
@@ -45,6 +44,7 @@ package Parsing
 // }
 
 // func (data *dataValidationStruct) convData(line []interface{}) { // Converts interfaces{} to struct values
+// Must be parsed in column order else could return before evaluation
 // 	data.One = Validation.ConvString(line[0])
 // 	data.Two = Validation.ConvString(line[1])
 // 	data.Three = Validation.ConvString(line[2])

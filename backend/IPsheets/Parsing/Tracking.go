@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"strings"
 	"time"
-
-	"github.com/jinzhu/copier"
 )
 
 var Track = &track{} // Create variable for reference
@@ -23,22 +21,19 @@ type track struct { // Create new sheet type
 func (s *track) Init() { // Initialize sheet specific TrackData
 	s.Range = "2020 Tracking!A:U"
 	s.SpreadsheetID = MATTRACK
-	s.EmptyData = &trackStruct{} // Empty struct of TrackData going into the collection
+	// s.EmptyData = &trackStruct{} // Empty struct of TrackData going into the collection
 	// s.EmptyCollection = make(map[string]TrackData)
 }
 
 func (s *track) Parse() { // Change type to correct sheet struct
 	Sheetdata := s.getSheet()
 
-	data := s.EmptyCollection //EmptyCollection
-	copier.Copy(&data, &s.EmptyCollection)
+	collection := new([]TrackData) //EmptyCollection
 	for i, e := range Sheetdata {
-		var newData Line
-		copier.Copy(&newData, &s.EmptyData)
-		newData.processNew(i, e, newData)
-		newData.appendNew(&data)
+		newData := new(trackStruct)
+		newData.processNew(i, e, newData, collection, &s.Errors)
 	}
-	s.AllData = data
+	s.AllData = collection
 }
 
 type trackStruct struct { // Struct that inherits base and TrackData structs
@@ -96,8 +91,7 @@ func (data *trackStruct) warningData() {
 	var sb strings.Builder
 
 	if data.Completed && (time.Now().Before(data.RecDate) || data.RecDate.IsZero()) {
-		sb.WriteString(fmt.Sprintln("Received true but Received Date invalid:", data.RecDate))
-		data.RecDate = time.Now()
+		sb.WriteString(fmt.Sprintln("Received true but Received Date invalid:", data.RecDate, "Assuming using expected or ordered date"))
 	}
 
 	if !data.Completed && !data.ExpDate.IsZero() && data.ExpDate.Before(time.Now().AddDate(0, 0, -2)) {
@@ -112,7 +106,7 @@ func (data *trackStruct) warningData() {
 }
 
 // Reject TrackData that doesn't make sense
-func (data *trackStruct) assumeData() {
+func (data *trackStruct) assumeData(errors *[]error) {
 	// Assume weirdly missing dates
 	if data.OrderDate.IsZero() {
 		if !data.ExpDate.IsZero() {

@@ -2,8 +2,6 @@ package Parsing
 
 import (
 	"backend/Validation"
-
-	"github.com/jinzhu/copier"
 )
 
 var Mpl = &mpl{} // Create variable for reference
@@ -13,28 +11,25 @@ func GetMpl() map[string]MplData { // Easy access func
 
 type mpl struct { // Create new sheet type
 	Sheet
-	EmptyCollection map[string]MplData // Shadow this to the correct type
+	// EmptyCollection map[string]MplData // Shadow this to the correct type
 }
 
 func (s *mpl) Init() { // Initialize sheet specific data
 	s.Range = "'Master Part List'!A:AK"
 	s.SpreadsheetID = INVMANGMENT
-	s.EmptyData = &mplStruct{} // Empty struct of Data going into the collection
-	s.EmptyCollection = make(map[string]MplData)
+	// s.EmptyData = &mplStruct{} // Empty struct of Data going into the collection
+	// s.EmptyCollection = make(map[string]MplData)
 }
 
 func (s *mpl) Parse() { // Change type to correct sheet struct
 	Sheetdata := s.getSheet()
 
-	data := s.EmptyCollection //EmptyCollection
-	copier.Copy(&data, &s.EmptyCollection)
+	collection := make(map[string]MplData) //EmptyCollection
 	for i, e := range Sheetdata {
-		var newData Line
-		copier.Copy(&newData, &s.EmptyData)
-		newData.processNew(i, e, newData)
-		newData.appendNew(&data)
+		newData := new(mplStruct) //EmptyData
+		newData.processNew(i, e, newData, collection, &s.Errors)
 	}
-	s.AllData = data
+	s.AllData = collection
 }
 
 type mplStruct struct { // Struct that inherits base and data structs
@@ -86,7 +81,7 @@ func (data *mplStruct) convData(line []interface{}) { // Converts interfaces{} t
 }
 
 func (new *mplStruct) appendNew(data interface{}) { // Adds new Data
-	temp := *data.(*map[string]MplData)
-	temp[new.SKU] = MplData{new.Desc, new.CountType}
+	// temp := data.(map[string]MplData)
+	data.(map[string]MplData)[new.SKU] = MplData{new.Desc, new.CountType}
 	// *data.(*[]MplData) = append(*data.(*[]MplData), new.MplData)
 }

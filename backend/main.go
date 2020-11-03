@@ -191,15 +191,27 @@ func main() {
 			// mpl := IPSheets.BatchGet([]string{"2020 Tracking!A:AK"}, "1pdhA4p4n4LbOQCrJgmSDZOzHBtV6mIfF2JUUrtxvGuc", srv)
 			// IPSheets.First5(IPSheets.TryNum, mpl[0])
 			Parsing.Track.Get(Parsing.Track)
+			fmt.Println(Parsing.Track.GetErrors())
 		}
 
 		// if strings.Compare("flc", text) == 0 {
 		// if "flc" == args[0] {
-		// 	data := Subs.FindOffspring(strings.ToUpper(args[1]), true)
+		// 	data := Parsing.Flc(strings.ToUpper(args[1]), false)
 		// 	fmt.Print(data)
 		// 	// IPSheets.Printmap(data)
 		// }
+		if "flag" == args[0] {
+			data := Parsing.CreateFlaggedBOM("S1"+strings.ToUpper(args[1]), false, 0)
+			fmt.Print(data)
+			// IPSheets.Printmap(data)
+		}
 
+		if "bom" == args[0] {
+			data := Parsing.CreateBOM(strings.ToUpper(args[1]), false, 0)
+			fmt.Print(data)
+			// IPSheets.Printmap(data)
+		}
+		// }
 		// if "ship" == text {
 		// 	data := Parsing.GetShip() //Shipments.Get()
 		// 	for _, e := range data {
@@ -215,11 +227,21 @@ func main() {
 		}
 
 		if "test" == text {
-			fmt.Println(Parsing.GetSubs())
+			// fmt.Println(Parsing.GetSubs())
+			fmt.Println(Parsing.Track.GetErrors())
 		}
 
 		if "ship" == text {
 			fmt.Println(Parsing.GetShip())
 		}
+
+		if "subs" == text {
+			fmt.Println(Parsing.GetSubs())
+		}
+
+		if "mpl" == text {
+			fmt.Println(Parsing.GetMpl())
+		}
+
 	}
 }
