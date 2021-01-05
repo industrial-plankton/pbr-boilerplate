@@ -10,14 +10,16 @@ import (
 	"google.golang.org/api/sheets/v4"
 )
 
-func WriteToSpreadSheet(SQLData [][]interface{}, rangeData string, spreadsheetId string, srv *sheets.Service) {
+func WriteToSpreadSheet(data [][]interface{}, rangeData string, spreadsheetId string, srv *sheets.Service) {
+	if srv == nil {
+		srv = GetSheetsService2()
+	}
 	defer utility.TimeTrack(time.Now(), "Write to "+rangeData)
 
 	ctx := context.Background()
 
 	// How the input data should be interpreted.
 	valueInputOption := "RAW" //"USER_ENTERED"
-	data := SQLData
 
 	rb := &sheets.BatchUpdateValuesRequest{
 		ValueInputOption: valueInputOption,
@@ -49,6 +51,9 @@ func WriteToSpreadSheet(SQLData [][]interface{}, rangeData string, spreadsheetId
 }
 
 func BatchWriteToSheet(SQLData [][][]interface{}, rangeData []string, spreadsheetId string, srv *sheets.Service) {
+	if srv == nil {
+		srv = GetSheetsService2()
+	}
 	defer utility.TimeTrack(time.Now(), "Batch Write to sheet")
 	ctx := context.Background()
 
@@ -84,6 +89,9 @@ func BatchWriteToSheet(SQLData [][][]interface{}, rangeData []string, spreadshee
 }
 
 func BatchWriteToSheetNoClear(SQLData [][][]interface{}, rangeData []string, spreadsheetId string, srv *sheets.Service) {
+	if srv == nil {
+		srv = GetSheetsService2()
+	}
 	defer utility.TimeTrack(time.Now(), "Batch Write to sheet without clearing")
 	ctx := context.Background()
 
@@ -112,6 +120,9 @@ func BatchWriteToSheetNoClear(SQLData [][][]interface{}, rangeData []string, spr
 }
 
 func ClearRange(rangeData []string, spreadsheetId string, srv *sheets.Service, ch chan bool) {
+	if srv == nil {
+		srv = GetSheetsService2()
+	}
 	defer utility.TimeTrack(time.Now(), "Clear Ranges")
 	ctx := context.Background()
 	cl := &sheets.ClearValuesRequest{
@@ -131,7 +142,7 @@ func BatchGet(rangeData []string, spreadsheetId string, srv *sheets.Service) [][
 	if srv == nil {
 		srv = GetSheetsService2()
 	}
-	defer utility.TimeTrack(time.Now(), "Batch Read from sheet")
+	defer utility.TimeTrack(time.Now(), "Batch Read from sheet"+rangeData[0])
 	ctx := context.Background()
 
 	resp, err := srv.Spreadsheets.Values.BatchGet(spreadsheetId).Ranges(rangeData...).Context(ctx).Do()
@@ -152,7 +163,7 @@ func BatchGetCol(rangeData []string, spreadsheetId string, srv *sheets.Service) 
 	if srv == nil {
 		srv = GetSheetsService2()
 	}
-	defer utility.TimeTrack(time.Now(), "Batch Read from sheet")
+	defer utility.TimeTrack(time.Now(), "Batch Read from sheet"+rangeData[0])
 	ctx := context.Background()
 
 	resp, err := srv.Spreadsheets.Values.BatchGet(spreadsheetId).MajorDimension("COLUMNS").Ranges(rangeData...).Context(ctx).Do()

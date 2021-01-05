@@ -16,9 +16,7 @@ type Sheet struct {
 	Range         string // Assign this to the correct Value when using
 	SpreadsheetID string // Assign this to the correct Value when using
 	AllData       interface{}
-	// EmptyCollection []interface{} // Shadow this to the correct type when using
-	// EmptyData       Line          // Assign this the correct type when using
-	Errors []error
+	Errors        []error
 }
 
 type Line interface {
@@ -54,6 +52,7 @@ func (s *Sheet) Get(ref SheetParse) interface{} { // Shadow this to the correct 
 	}
 	if s.AllData == nil {
 		ref.Parse()
+		fmt.Println("Refreshed " + s.Range)
 	}
 	return s.AllData //.(emptyCollectiontype)
 }
@@ -141,6 +140,8 @@ func (data *SheetParseBase) handleError(line int, errors *[]error) {
 	err := recover()
 	if err != nil {
 		if !strings.Contains(err.(error).Error(), "&minor&") && !strings.Contains(err.(error).Error(), "index") && line != 0 { //Print off errors that dont contain the &minor& flag, and index errors
+			// if !strings.Contains(err.(error).Error(), "index") && line != 0 { //Print off errors that arent index errors
+
 			msg := fmt.Errorf("%v %v %v", err.(error).Error(), ", line:", line+1)
 			fmt.Println(msg)
 			*errors = append(*errors, msg)

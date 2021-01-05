@@ -10,8 +10,13 @@ import (
 
 var Shipments = &shipments{}
 
-func GetShip() []ShipmentsData { // Easy access func
-	return Shipments.Get(Shipments).([]ShipmentsData)
+func GetShip() *[]ShipmentsData { // Easy access func
+	return Shipments.Get(Shipments).(*[]ShipmentsData)
+}
+
+func CheckShip() (errs []error) {
+	_ = GetShip()
+	return Shipments.Errors
 }
 
 type shipments struct {
@@ -23,16 +28,6 @@ func (s *shipments) Init() {
 	s.Range = "'Shipments'!A:N"
 	s.SpreadsheetID = INVMANGMENT
 	// s.EmptyData = &shipmentsStruct{}
-}
-
-func (s *shipments) Get(ref SheetParse) interface{} { // Shadow this to the correct type when using // OR Assert correct type when receiving
-	if s.SpreadsheetID == "" {
-		ref.Init()
-	}
-	if s.AllData == nil {
-		ref.Parse()
-	}
-	return s.AllData //.(emptyCollectiontype)
 }
 
 func (s *shipments) Parse() {
@@ -65,9 +60,6 @@ func (data *shipmentsStruct) convData(line []interface{}) {
 		staged  = 11
 		shipped = 12
 	)
-	data.Alloted = Validation.ConvDate(line[alloted])
-	data.Staged = Validation.ConvDate(line[staged])
-	data.Shipped = Validation.ConvDate(line[shipped])
 
 	parts := strings.Split(Validation.ConvStringUpper(line[skusCol]), ",")
 	data.Parts = make([]Part, len(parts))
@@ -78,12 +70,16 @@ func (data *shipmentsStruct) convData(line []interface{}) {
 			}
 			_, err := strconv.ParseFloat(info, 64)
 			if err != nil {
-				data.Parts[i].Sku = Validation.ConvStringUpper(info)
+				data.Parts[i].Sku = Validation.Sku(info)
 			} else {
 				data.Parts[i].Qty = Validation.ConvNumPos(info)
 			}
 		}
 	}
+
+	data.Alloted = Validation.ConvDate(line[alloted])
+	data.Staged = Validation.ConvDate(line[staged])
+	data.Shipped = Validation.ConvDate(line[shipped])
 
 }
 
@@ -120,6 +116,7 @@ func (data *shipmentsStruct) assumeData(errors *[]error) {
 
 	// Assume ship 2 years from now if no date
 	if data.Shipped.IsZero() {
-		data.Shipped = time.Now().AddDate(2, 0, 0)
+		data.Shipped = time.Now()
+		data.Shipped = data.Shipped.AddDate(2, 0, 0)
 	}
 }

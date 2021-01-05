@@ -5,8 +5,14 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
+	"backend/DataProcessing"
+	"backend/IPSheets"
 	"backend/IPSheets/Parsing"
+	"backend/IPSheets/Writing"
+	"backend/Validation"
+	"backend/utility"
 
 	// "backend/IPSheets/Subs"
 	"backend/WikiGen"
@@ -190,7 +196,8 @@ func main() {
 		if strings.Compare("track", text) == 0 {
 			// mpl := IPSheets.BatchGet([]string{"2020 Tracking!A:AK"}, "1pdhA4p4n4LbOQCrJgmSDZOzHBtV6mIfF2JUUrtxvGuc", srv)
 			// IPSheets.First5(IPSheets.TryNum, mpl[0])
-			Parsing.Track.Get(Parsing.Track)
+			// Parsing.Track.Get(Parsing.Track)
+			Parsing.GetTrack()
 			fmt.Println(Parsing.Track.GetErrors())
 		}
 
@@ -211,13 +218,14 @@ func main() {
 			fmt.Print(data)
 			// IPSheets.Printmap(data)
 		}
-		// }
-		// if "ship" == text {
-		// 	data := Parsing.GetShip() //Shipments.Get()
-		// 	for _, e := range data {
-		// 		fmt.Println(e)
-		// 	}
-		// }
+
+		if "inv" == args[0] {
+			currInc(strings.ToUpper(args[1]))
+		}
+
+		if "cpart" == args[0] {
+			CheckPart(strings.ToUpper(args[1]))
+		}
 
 		if args[0] == "gen" {
 			subs := Parsing.Subs.Get(Parsing.Subs).(map[string][]Parsing.SubsData)
@@ -228,7 +236,10 @@ func main() {
 
 		if "test" == text {
 			// fmt.Println(Parsing.GetSubs())
-			fmt.Println(Parsing.Track.GetErrors())
+			// fmt.Println(Parsing.Track.GetErrors())
+			// loc, _ := time.LoadLocation("London")
+			fmt.Println(time.Now())
+			fmt.Println(Validation.ConvDate("2020-12-17"))
 		}
 
 		if "ship" == text {
@@ -241,7 +252,56 @@ func main() {
 
 		if "mpl" == text {
 			fmt.Println(Parsing.GetMpl())
+
 		}
 
+		if "CurrInv" == text {
+			writeCurrInv()
+		}
+
+		if "check" == text {
+			// fmt.Println(Parsing.CheckSubs())
+			// actErrors := Parsing.CheckSubs()
+			// errors := make([][]interface{}, len(actErrors))
+			// for i := range actErrors {
+			// 	errors[i] = []interface{}{actErrors[i].Error()}
+			// }
+			// fmt.Println(errors)
+
+			// output := [][]interface{}{}
+			// for _, S := range actErrors {
+			// 	line := []interface{}{S.Error}
+			// 	output = append(output, line)
+			// }
+			IPSheets.WriteToSpreadSheet(Writing.FormatErrors(Parsing.CheckSubs()), "'Errors'!A:G", Parsing.INVMANGMENT, nil)
+			IPSheets.WriteToSpreadSheet(Writing.FormatErrors(Parsing.CheckTrack()), "'GoLangErrors'!A:G", Parsing.MATTRACK, nil)
+		}
 	}
+
+}
+func currInc(sku string) {
+	defer utility.TimeTrack(time.Now(), "man func")
+	inv := DataProcessing.NewInventory(sku, time.Now())
+	fmt.Println(inv.PhysicallyCounted)
+	fmt.Println(inv.Arrived)
+	fmt.Println(inv.AssumedArrived)
+	fmt.Println(inv.Sent)
+	fmt.Println(inv.Alloted)
+	fmt.Println(inv.OnOrder)
+	fmt.Println(inv.Theoretical())
+	fmt.Println(inv.Excess())
+}
+
+func CheckPart(sku string) {
+	defer utility.TimeTrack(time.Now(), "man func")
+	for _, e := range *Parsing.GetTrack() {
+		if e.Sku == sku {
+			fmt.Println(e)
+		}
+	}
+}
+
+func writeCurrInv() {
+	defer utility.TimeTrack(time.Now(), "Curr Inv")
+	DataProcessing.CurrentInv()
 }

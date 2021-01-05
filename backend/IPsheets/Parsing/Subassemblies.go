@@ -17,6 +17,21 @@ type subs struct { // Create new sheet type
 	// EmptyCollection map[string][]SubsData // Shadow this to the correct type
 }
 
+func CheckSubs() (errs []error) {
+	subs := GetSubs()
+	errs = Subs.Errors
+	for parent := range subs {
+		for child, qty := range unSafeCreateBOM(parent, false, 0) {
+			if qty < 0 {
+				// fmt.Printf("%s contains negative amount of %s when broken out \n", parent, child)
+				errs = append(errs, fmt.Errorf("%s contains negative amount of %s when broken out \n", parent, child))
+				// errs = []error{fmt.Errorf("%s contains negative amount of %s when broken out \n", parent, child)}
+			}
+		}
+	}
+	return
+}
+
 func (s *subs) Init() { // Initialize sheet specific data
 	s.Range = "'SubAssem Builder'!A:I"
 	s.SpreadsheetID = INVMANGMENT
@@ -32,6 +47,7 @@ func (s *subs) Parse() { // Change type to correct sheet struct
 		newData := new(subsStruct) //EmptyData
 		newData.processNew(i, e, newData, collection, &s.Errors)
 	}
+
 	s.AllData = collection
 }
 
@@ -104,34 +120,55 @@ func FindOffspring(parent string, OnlyImportant bool) map[string]float64 {
 	return lostChildren
 }
 
-// Wrapper for recursive BOM, returns a map of parents parts and their Qtys
+// Returns a map of parents parts and their Qtys and removes all 0 and negative entries
 func CreateBOM(parent string, OnlyImportant bool, depth int) (BOM map[string]float64) {
-	BOM = make(map[string]float64)
-	recursiveBOM(parent, 1, OnlyImportant, depth, 0, BOM)
+	BOM = unSafeCreateBOM(parent, OnlyImportant, depth)
+	for k, v := range BOM {
+		if v <= 0 {
+			delete(BOM, k)
+		}
+	}
 	return
+}
+
+// Returns a map of parents parts and their Qtys and leaves all 0 and negative entries
+func unSafeCreateBOM(parent string, OnlyImportant bool, depth int) (BOM map[string]float64) {
+	BOM = make(map[string]float64)
+	AmendBOM(parent, 1, OnlyImportant, depth, BOM)
+	return
+}
+
+// Adds parent BOM to BOM
+func AmendBOM(parent string, multiple float64, OnlyImportant bool, depth int, BOM map[string]float64) {
+	recursiveBOM(parent, multiple, OnlyImportant, depth, 0, BOM)
 }
 
 //  Holy instantaneous
 func recursiveBOM(parent string, multiple float64, OnlyImportant bool, depth int, currentDepth int, BOM map[string]float64) {
+	// Get needed data, could move this to AmendBOM and have it passed through but this finish's instantly already
 	sheetData := GetSubs()
 	mpl := GetMpl()
 
 	children, hasChildren := sheetData[parent]
 	if !hasChildren || (depth != 0 && currentDepth >= depth) || (OnlyImportant && mpl[parent].CountType) {
-		BOM[parent] += multiple
+		BOM[parent] += multiple // add to BOM
 	} else {
 		for _, line := range children {
-			recursiveBOM(line.Child, line.Qty*multiple, OnlyImportant, depth, currentDepth+1, BOM)
+			recursiveBOM(line.Child, line.Qty*multiple, OnlyImportant, depth, currentDepth+1, BOM) // we must go deeper
 		}
 	}
 }
+
+//
+//** EXPERIMENTING WITH FLAGS DONT USE
+//
 
 // Wrapper for recursive BOM, returns a map of parents parts and their Qtys
 func CreateFlaggedBOM(parent string, OnlyImportant bool, depth int) (BOM map[string]float64) {
 	BOM = make(map[string]float64)
 	r := regexp.MustCompile(`[A-Z]+[0-9]+`)
 	matches := r.FindAllString(Validation.ConvStringUpper(parent), -1)
-	fmt.Println(matches)
+	// fmt.Println(matches)
 	recursiveFlaggedBOM(matches[0], matches[1:], 1, OnlyImportant, depth, 0, BOM)
 	return
 }

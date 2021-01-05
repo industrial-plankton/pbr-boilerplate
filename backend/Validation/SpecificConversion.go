@@ -1,9 +1,12 @@
 package Validation
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 func Sku(sku interface{}) (SKU string) {
-	SKU = ConvString(sku)
+	SKU = strings.ToUpper(ConvString(sku))
 	if SKU == "" {
 		panic(fmt.Errorf("%s", "&minor& No SKU"))
 	}

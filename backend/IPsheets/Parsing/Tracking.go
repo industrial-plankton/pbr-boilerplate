@@ -9,8 +9,13 @@ import (
 )
 
 var Track = &track{} // Create variable for reference
-func GetTrack() []TrackData { // Easy access func
-	return Track.Get(Track).([]TrackData)
+func GetTrack() *[]TrackData { // Easy access func
+	return Track.Get(Track).(*[]TrackData)
+}
+
+func CheckTrack() (errs []error) {
+	_ = GetTrack()
+	return Track.Errors
 }
 
 type track struct { // Create new sheet type
@@ -21,8 +26,6 @@ type track struct { // Create new sheet type
 func (s *track) Init() { // Initialize sheet specific TrackData
 	s.Range = "2020 Tracking!A:U"
 	s.SpreadsheetID = MATTRACK
-	// s.EmptyData = &trackStruct{} // Empty struct of TrackData going into the collection
-	// s.EmptyCollection = make(map[string]TrackData)
 }
 
 func (s *track) Parse() { // Change type to correct sheet struct
@@ -55,14 +58,14 @@ type TrackData struct {
 
 func (data *trackStruct) convData(line []interface{}) { // Converts interfaces{} to struct values
 	const (
+		doorwayCol       = 3
 		skuCol           = 5
 		qtyCol           = 6
-		recQtyCol        = 17
-		doorwayCol       = 3
-		fullyReceivedCol = 19
 		orderCol         = 12
 		exCol            = 14
 		recCol           = 16
+		recQtyCol        = 17
+		fullyReceivedCol = 19
 	)
 	data.Doorway = Doorway.ToDoorway(line[doorwayCol])
 	data.Sku = Validation.Sku(line[skuCol])
@@ -131,5 +134,10 @@ func (data *trackStruct) assumeData(errors *[]error) {
 
 	if !data.Completed && data.Doorway == Doorway.Incoming && data.ExpDate.IsZero() {
 		// TODO Assume Lead Time
+		lead := GetPart(data.Sku).LeadTime
+		if lead == 0 {
+			lead = GetVendor(GetPart(data.Sku).Supplier).Leadtime
+		}
+		data.ExpDate = data.OrderDate.AddDate(0, 0, int(lead))
 	}
 }
